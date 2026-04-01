@@ -14,13 +14,14 @@ class SendResetCode extends Mailable
 
     // 1. Declaramos una variable pública para el código
     public $code;
+    public $url;
 
     /**
      * En el constructor recibimos el código desde el Controlador
      */
-    public function __construct($code)
-    {
+    public function __construct($code, $url) {
         $this->code = $code;
+        $this->url = $url;
     }
 
     /**

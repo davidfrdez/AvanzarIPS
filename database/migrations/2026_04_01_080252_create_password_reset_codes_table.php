@@ -13,7 +13,9 @@ return new class extends Migration
     {
         Schema::create('password_reset_codes', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->string('correo')->index();
+            $table->string('code');
+            $table->timestamp('created_at')->nullable();
         });
     }
 

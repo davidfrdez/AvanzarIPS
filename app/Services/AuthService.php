@@ -26,7 +26,7 @@ class AuthService
         }
 
         // Limpieza opcional: borrar tokens viejos antes de crear uno nuevo (evita basura en la DB)
-        // $user->tokens()->delete(); 
+        $user->tokens()->delete();
 
         $token = $user->createToken('AvanzarAuthToken')->plainTextToken;
 
