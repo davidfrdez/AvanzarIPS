@@ -13,6 +13,13 @@ class AuthService
     {
         $user = User::where('correo', $data['correo'])->first();
 
+        // 2. Validación: ¿El usuario existe?
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'correo' => ['Este correo electrónico no está registrado.'],
+            ]);
+        }
+
         if (!$user || !Hash::check($data['password'], $user->password)) {
             throw ValidationException::withMessages([
                 'correo' => ['Las credenciales son incorrectas.'],
