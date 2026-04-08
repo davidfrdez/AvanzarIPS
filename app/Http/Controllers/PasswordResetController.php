@@ -104,6 +104,6 @@ class PasswordResetController extends Controller
 
         $record->delete();
 
-        return response()->json(['message' => 'Contraseña actualizada con éxito'], 200);
+        return response()->json(['status' => 'success','message' => 'Contraseña actualizada con éxito'], 200);
     }
 }
