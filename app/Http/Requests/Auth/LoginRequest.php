@@ -24,7 +24,7 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'correo'   => 'required|email|exists:usuarios,correo',
+            'correo'   => 'required|email', // Solo validamos formato y presencia
             'password' => 'required|string',
         ];
     }
