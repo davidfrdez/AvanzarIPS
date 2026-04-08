@@ -55,5 +55,12 @@ class AuthService
         if ($token instanceof PersonalAccessToken) {
             $token->delete();
         }
+
+        activity()->causedBy($user)
+            ->withProperties([
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent()
+            ])
+            ->log('El usuario cerró sesión exitosamente');
     }
 }
