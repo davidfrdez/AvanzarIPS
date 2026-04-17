@@ -37,9 +37,11 @@ class AuthService
 
         $token = $user->createToken('AvanzarAuthToken')->plainTextToken;
 
+        $user->load('rol.permisos');
+
         return [
             'token' => $token,
-            'user'  => $user
+            'user'  => $user,
         ];
     }
 

@@ -38,6 +38,12 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    public function rol()
+    {
+        // Un usuario pertenece a un solo rol
+        return $this->belongsTo(Rol::class);
+        return $this->belongsTo(Rol::class, 'rol_id');
+    }
     /**
      * Get the attributes that should be cast.
      *
@@ -50,5 +56,15 @@ class User extends Authenticatable
             'password' => 'hashed',
             'esta_activo' => 'boolean',
         ];
+    }
+    public function tienePermiso($permisoSlug): bool
+    {
+        // Si el usuario no tiene rol, no tiene permisos
+        if (!$this->rol) {
+            return false;
+        }
+
+        // Busca en los permisos del rol si existe el slug solicitado
+        return $this->rol->permisos()->where('vista', $permisoSlug)->exists();
     }
 }

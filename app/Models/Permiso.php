@@ -4,16 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Rol extends Model
+class Permiso extends Model
 {
-    // Laravel por defecto busca la tabla 'rols', así que forzamos 'roles'
-    protected $table = 'roles';
+    protected $table = 'permisos';
 
-    protected $fillable = ['nombre'];
-    public function usuarios()
+    protected $fillable = ['nombre', 'slug', 'descripcion'];
+
+    public function roles()
     {
-        // Un rol tiene muchos usuarios
-        return $this->hasMany(User::class);
+        // Un permiso pertenece a muchos roles
+        return $this->belongsToMany(Rol::class, 'permiso_rol');
     }
     public function permisos()
     {
