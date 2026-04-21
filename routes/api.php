@@ -31,10 +31,6 @@ Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']
 // RUTAS PROTEGIDAS (Requieren token)
 // ---------------------------------------------------
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('/usuarios', [UserController::class, 'store']);
