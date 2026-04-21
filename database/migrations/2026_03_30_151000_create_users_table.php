@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nombre'); // Cambié 'name' por 'nombre'
             $table->foreignId('rol_id')->constrained('roles'); // Esto exige que la tabla 'roles' se cree ANTES
+            $table->foreignId('especialidad_id')->constrained('especialidades');
             $table->string('correo')->unique(); // Cambié 'email' por 'correo'
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password'); // Recomendación: deja 'password' para que Laravel no se queje

@@ -12,10 +12,12 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RolesSeeder::class,    // 1. Primero nacen los roles
-            UsuariosSeeder::class, // 2. Luego nacen los usuarios y se les asigna su rol
-            PermisosSeeder::class,// 3. Luego Se crean permisos para cada rol
-            PermisoRolSeeder::class, // 4. Luego nacen los usuarios y se les asigna su rol
+            RolesSeeder::class,          // 1. Primero nacen los roles base (Administrador, Médico, etc.)
+            EspecialidadesSeeder::class, // 2. Se crean las especialidades (1: Sin especificar, 2: Fisioterapia, etc.)
+            UsuariosSeeder::class,       // 3. Nacen los usuarios y se les asigna su rol y especialidad
+            PermisosSeeder::class,       // 4. Se definen todos los permisos disponibles en el sistema
+            PermisoRolSeeder::class,     // 5. Se vinculan los permisos específicos a cada rol (Tabla pivote)
+            CitaSeeder::class,           // 6. Se programan las citas vinculando pacientes, médicos y especialidades
         ]);
     }
 }

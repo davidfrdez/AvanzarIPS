@@ -15,37 +15,28 @@ class UsuariosSeeder extends Seeder
      */
     public function run(): void
     {
-        // Buscamos el ID del rol Administrador
+        // Buscamos el ID del rol Administrador y Médico
         $rolAdmin = Rol::where('nombre', 'Administrador')->first();
         $rolmedico = Rol::where('nombre', 'Medico')->first();
+        
         // Asignamos el ID encontrado
         $adminId = $rolAdmin->id;
         $medicoId = $rolmedico->id;
-        // Creamos los usuarios
-        User::create([
-            'nombre' => 'David Admin',
-            'rol_id' => $adminId,
-            'correo' => 'admin@test.com',
-            'password' => Hash::make('admin1234'),
-        ]);
-
-        User::create([
-            'nombre' => 'Daniel',
-            'rol_id' => $medicoId,
-            'correo' => 'Daniel@test.com',
-            'password' => Hash::make('admin1234'),
-        ]);
-
+        
+        // 1. Creación del Administrador (Sin especialidad -> ID 1)
         User::create([
             'nombre' => 'David',
             'rol_id' => $adminId,
+            'especialidad_id' => 1, // <-- Agregado: Sin especificar
             'correo' => 'santiagodavid980@gmail.com',
             'password' => Hash::make('admin1234'),
         ]);
 
+        // 2. Creación del Médico (Fisioterapia -> ID 2)
         User::create([
             'nombre' => 'Daniel (Secundario)',
             'rol_id' => $medicoId,
+            'especialidad_id' => 2, // <-- Agregado: Fisioterapia
             'correo' => 'fepiperuiz11@gmail.com',
             'password' => Hash::make('admin1234'),
         ]);

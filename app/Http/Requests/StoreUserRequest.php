@@ -34,6 +34,7 @@ class StoreUserRequest extends FormRequest
                     ->mixedCase() // Requiere mayúsculas y minúsculas
                     ->numbers(),  // Requiere números
             ],
+            
         ];
     }
     public function messages(): array

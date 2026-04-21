@@ -22,4 +22,24 @@ class UserController extends Controller
             'data' => $user
         ], 201);
     }
+    public function Roles(): JsonResponse
+    {
+        $roles = $this->userService->getRoles();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Roles obtenidos exitosamente',
+            'data' => $roles
+        ], 200); // 200 es el código correcto para respuestas GET exitosas
+    }
+    public function Especialidades(): JsonResponse
+    {
+        $espcialidades = $this->userService->getEspecialidades();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Especialidades obtenidos exitosamente',
+            'data' => $espcialidades
+        ], 200); // 200 es el código correcto para respuestas GET exitosas
+    }
 }
