@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Cita extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\Auditable;
 
     protected $table = 'citas';
 

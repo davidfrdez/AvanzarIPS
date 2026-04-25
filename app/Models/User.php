@@ -10,7 +10,7 @@ use Laravel\Sanctum\HasApiTokens; // Asegúrate de que esta línea esté present
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens, \App\Traits\Auditable;
 
     // ESTA LÍNEA ES LA CLAVE:
     protected $table = 'usuarios';
@@ -23,6 +23,7 @@ class User extends Authenticatable
     protected $fillable = [
         'nombre',
         'rol_id',
+        'especialidad_id',
         'correo',
         'password',
         'esta_activo',
@@ -40,10 +41,14 @@ class User extends Authenticatable
 
     public function rol()
     {
-        // Un usuario pertenece a un solo rol
-        return $this->belongsTo(Rol::class);
         return $this->belongsTo(Rol::class, 'rol_id');
     }
+
+    public function especialidad()
+    {
+        return $this->belongsTo(Especialidad::class, 'especialidad_id');
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -59,12 +64,16 @@ class User extends Authenticatable
     }
     public function tienePermiso($permisoSlug): bool
     {
-        // Si el usuario no tiene rol, no tiene permisos
         if (!$this->rol) {
             return false;
         }
-
-        // Busca en los permisos del rol si existe el slug solicitado
         return $this->rol->permisos()->where('vista', $permisoSlug)->exists();
     }
+
+    // Nuevas relaciones clínicas
+    public function historiasClinicasIngreso() { return $this->hasMany(HistoriaClinicaIngreso::class, 'medico_id'); }
+    public function ordenesMedicas() { return $this->hasMany(OrdenMedica::class, 'medico_id'); }
+    public function consultasEspecialistas() { return $this->hasMany(ConsultaEspecialista::class, 'medico_id'); }
+    public function escalasWeefim() { return $this->hasMany(EscalaWeefim::class, 'profesional_id'); }
+    public function terapias() { return $this->hasMany(Terapia::class, 'profesional_id'); }
 }

@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePacienteRequest;
-use App\Services\UserService;
+use App\Services\PacienteService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class PacienteController extends Controller
 {
     public function __construct(
-        protected UserService $pacienteService
+        protected PacienteService $pacienteService
     ) {}
 
     public function store(StorePacienteRequest $request): JsonResponse

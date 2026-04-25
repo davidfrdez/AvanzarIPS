@@ -1,0 +1,229 @@
+Especificación de Requisitos de Software (SRS) 
+Proyecto: Sistema de Gestión de Historias Clínicas para Avanzar IPS 
+Versión: 1.0 
+Fecha: 30-01-2025 
+ 
+1. Introducción 
+1.1 Propósito 
+Automatizar el proceso manual de historias clínicas de Avanzar IPS mediante un 
+software web que garantice trazabilidad, seguridad y eficiencia en la gestión de 
+terapias y reportes. 
+1.2 Alcance 
+El sistema incluirá tres módulos: 
+1. Administración: Gestión de usuarios, roles, objetivos y permisos. 
+2. Gestión de Historias Clínicas: Registro digital de terapias con integración de 
+resultados predeterminados y firma electrónica. 
+3. Supervisión y Reportería: Generación de informes y seguimiento de horas 
+invertidas por paciente. 
+1.3 Definiciones 
+• IPS: Institución Prestadora de Servicios de Salud. 
+• HCE: Historia Clínica Electrónica (normada por Ley 2015 de Colombia). 
+• RIPS: Registro Individual de Prestación de Servicios. 
+• RBAC: Control de Acceso Basado en Roles (Role-Based Access Control). 
+1.4 Referencias 
+• Ley 2015 de 2020 (Regulación de HCE en Colombia). 
+• Ley 1581 de 2012 (Protección de Datos Personales). 
+ 
+ 
+ 
+2. Requisitos Funcionales 
+Módulo 1: Administración 
+ID Nombre Descripción Prioridad Criterios de Aceptación 
+FR-
+01 
+Gestión de 
+Usuarios 
+Crear, editar y desactivar 
+usuarios (nombre, correo, 
+rol). 
+Alta 
+Solo usuarios con rol 
+"Administrador" pueden 
+acceder. 
+FR-
+02 
+Gestión de 
+Roles 
+Definir roles (ej: Médico, 
+Terapeuta, Supervisor) con 
+permisos específicos. 
+Alta Roles predefinidos no 
+pueden eliminarse. 
+FR-
+03 
+Gestión de 
+Objetivos 
+Crear/editar objetivos 
+terapéuticos (ej: "Movilidad 
+articular"). 
+Media 
+Cada objetivo debe tener 
+al menos un requisito 
+asociado. 
+FR-
+04 
+Reset de 
+Contraseña 
+Restablecer contraseñas de 
+usuarios y notificar por 
+correo. 
+Alta Contraseña temporal 
+expira en 24 horas. 
+FR-
+05 
+Asignación 
+de Objetivos 
+Asignar objetivos a roles o 
+usuarios específicos. Media 
+Un objetivo no puede 
+asignarse a más de 10 
+roles simultáneamente. 
+FR-
+06 
+Auditoría de 
+Cambios 
+Registrar quién y cuándo se 
+modificó un 
+usuario/rol/objetivo. 
+Media Logs deben ser 
+inmodificables. 
+Módulo 2: Gestión de Historias Clínicas 
+ID Nombre Descripción Prioridad Criterios de 
+Aceptación 
+FR-
+07 Autenticación Login con 
+usuario/contraseña y RBAC. Alta Bloqueo tras 3 intentos 
+fallidos. 
+FR-
+08 
+Búsqueda de 
+Pacientes 
+Buscar pacientes por cédula 
+y ver historial de terapias. Alta 
+Si el paciente no 
+existe, mostrar opción 
+"Crear nuevo" . 
+ID Nombre Descripción Prioridad Criterios de 
+Aceptación 
+FR-
+09 
+Registro de 
+Terapia 
+Asignar objetivo > requisito > 
+resultados (checks) + 
+fecha/hora automática. 
+Alta 
+Campos obligatorios: 
+firma electrónica, 
+especialidad. 
+FR-
+10 
+Textos 
+Predeterminados 
+Autocompletar resultados 
+con textos predefinidos en 
+BD. 
+Media Textos editables solo 
+por Administradores. 
+FR-
+11 
+Validación de 
+Datos 
+Alertar si falta firma 
+electrónica o hay duplicidad 
+de terapia en la misma 
+fecha. 
+Alta No permitir guardar 
+hasta corregir errores. 
+FR-
+12 Firma Electrónica Guardar firma con nombre, 
+cédula y hora de registro. Alta La firma debe 
+encriptarse (AES-256). 
+Módulo 3: Supervisión y Reportería 
+ID Nombre Descripción Prioridad Criterios de 
+Aceptación 
+FR-
+13 
+Vista 
+Consolidada 
+Mostrar horas totales de terapias 
+por paciente, filtradas por 
+fecha/especialidad. 
+Alta 
+Cálculo automático 
+de horas al 
+seleccionar rango de 
+fechas. 
+FR-
+14 
+Generación 
+de PDF 
+Exportar historial clínico de 
+pacientes seleccionados a PDF . Alta 
+PDF incluye logo de 
+Avanzar IPS y sello de 
+"Confidencial" . 
+FR-
+15 
+Descarga en 
+Lote 
+Crear ZIP con múltiples PDFs 
+(nombre: 
+[CÉDULA]_[NOMBRE].pdf). 
+Media Límite de 50 
+pacientes por lote. 
+FR-
+16 
+Filtros 
+Avanzados 
+Filtrar por EPS, especialidad o 
+profesional. Media 
+Opción "Exportar a 
+Excel" en resultados 
+filtrados. 
+ 
+3. Requisitos No Funcionales 
+ID Categoría Descripción Prioridad 
+NFR-
+01 Seguridad Encriptación de datos sensibles (ej: firmas, 
+contraseñas). Alta 
+NFR-
+02 Rendimiento Tiempo de respuesta < 2 segundos en búsquedas y 
+< 10 segundos en generación de PDF . Alta 
+NFR-
+03 Usabilidad Interfaz intuitiva con capacitación máxima de 2 
+horas para usuarios. Alta 
+NFR-
+04 Compatibilidad Soporte para Chrome, Edge y Firefox (últimas 2 
+versiones). Media 
+NFR-
+05 
+Cumplimiento 
+Legal 
+Almacenamiento de HCE según Ley 2015 y 
+protección de datos (Ley 1581). Alta 
+NFR-
+06 Escalabilidad Soporte para 500 usuarios concurrentes y 50,000 
+registros anuales. Media 
+NFR-
+07 Disponibilidad Funcionamiento 24/7 con mantenimiento 
+programado los domingos (00:00–02:00). Alta 
+ 
+4. Anexos 
+• Diagramas de Casos de Uso: Adjuntos en documento separado. 
+• Prototipos de Interfaz: Incluidos en repositorio de diseño (Figma). 
+• Glosario Técnico: Definiciones completas de términos como "RBAC" o "HCE" . 
+ 
+Notas Finales 
+• Prioridades: 
+o Alta: Crítico para operación básica. 
+o Media: Mejora la experiencia o eficiencia. 
+• Este documento debe complementarse con un Plan de Pruebas para validar 
+cada requisito. 
+Elaborado por: Daniel Avellaneda Nocua – Especialista en Seguridad Informática 
+ 
+Revisado por:  
+ 
+ 
+Aprobado por:  
+ 

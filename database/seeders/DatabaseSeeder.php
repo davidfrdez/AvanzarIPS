@@ -17,7 +17,9 @@ class DatabaseSeeder extends Seeder
             UsuariosSeeder::class,       // 3. Nacen los usuarios y se les asigna su rol y especialidad
             PermisosSeeder::class,       // 4. Se definen todos los permisos disponibles en el sistema
             PermisoRolSeeder::class,     // 5. Se vinculan los permisos específicos a cada rol (Tabla pivote)
-            CitaSeeder::class,           // 6. Se programan las citas vinculando pacientes, médicos y especialidades
+            PacientesSeeder::class,      // 6. Se crea paciente de prueba ANTES de Citas 
+            CitaSeeder::class,           // 7. Se programan las citas vinculando pacientes, médicos y especialidades
+            ObjetivosSeeder::class,      // 8. Se crea el árbol base de Objetivos, Actividades y Respuestas
         ]);
     }
 }

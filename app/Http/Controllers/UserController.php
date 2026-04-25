@@ -22,7 +22,7 @@ class UserController extends Controller
             'data' => $user
         ], 201);
     }
-    public function Roles(): JsonResponse
+    public function roles(): JsonResponse
     {
         $roles = $this->userService->getRoles();
 
@@ -32,7 +32,7 @@ class UserController extends Controller
             'data' => $roles
         ], 200); // 200 es el código correcto para respuestas GET exitosas
     }
-    public function Especialidades(): JsonResponse
+    public function especialidades(): JsonResponse
     {
         $espcialidades = $this->userService->getEspecialidades();
 

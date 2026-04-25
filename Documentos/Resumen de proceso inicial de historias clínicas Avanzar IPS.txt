@@ -1,0 +1,88 @@
+Resumen de proceso inicial de historias clínicas 
+Avanzar IPS 
+Modulo 1: Administración 
+Este módulo contara con las siguientes funciones: 
+• creación y edición de usuarios. 
+• creación y edición de roles. 
+• creación y edición de objetivos 
+• creación y edición de actividades dentro de los objetivos 
+• creación y edición de respuestas dentro de los requisitos. 
+• asignación de objetivos a los roles o a un usuario en específico. 
+• Reset o asignación de contraseñas para los usuarios. 
+• Auditoría de cambios: Registro automático de quién crea/edita usuarios, roles, 
+objetivos, etc., para cumplir con estándares de trazabilidad (ej: Ley 2015 de 
+HCE en Colombia). 
+• Políticas de seguridad: 
+- Contraseñas con complejidad (mínimo 8 caracteres, mayúsculas, 
+números). 
+- Encriptación de datos sensibles (ej: firmas electrónicas). 
+• Bajas de profesionales: Opción de desactivar usuarios y reasignar historiales 
+clínicos a otro profesional. 
+• Carga masiva de pacientes, asignación de pacientes a médicos, y fechas y 
+horas de citas, para evolución. 
+ 
+Modulo 2: Gestión de historias clínicas 
+Este módulo contara con las siguientes funciones: 
+• Logueo con usuario y contraseña del profesional de salud, según el rol del 
+usuario debe precargar una serie de permisos ya puestos al rol para mostrar 
+los objetivos asignados para los pacientes que sean atendidos por el 
+profesional. 
+• Buscador a estilo de CRM por número de documento de identidad del 
+paciente, esto debe un histórico de todas las sesiones realizadas a ese 
+paciente por parte del profesional logado en la herramienta, y seleccionar por 
+medio de un botón de agregar una nueva terapia se enviado a una vista donde 
+se gestionará la terapia. 
+• luego de buscar un paciente debe seleccionar un objetivo (determinados 
+desde el módulo de administración de permisos) 
+• luego de seleccionar el objetivo, debe mostrar la lista de activades y 
+seleccionar una 
+• al seleccionar un requisito, debe mostrar la lista de los resultados que el 
+profesional debe ir marcando con un check a medida que avanza con las 
+terapias.  
+• al finalizar las terapias el profesional de salud podrá guardar los resultados de 
+la sesión insertando fecha hora y especialidad, guardando una firma 
+electrónica en bases de datos con nombre y datos del profesional de salud 
+que realizo el proceso. 
+• cada resultado se llenará automáticamente con un texto ya predeterminado 
+asignado en bases de datos para cada resultado. 
+• Validación en tiempo real: Alertar si un paciente ya tiene una terapia 
+programada el mismo día, Campos obligatorios antes de guardar (ej: firma 
+electrónica). 
+• Notificaciones: Recordatorios automáticos para completar registros 
+pendientes. 
+• Plantillas personalizables: Permitir a los profesionales agregar notas libres 
+además de los resultados predeterminados, Asignando el permiso desde 
+adminstracion 
+• Acceso sin conexión: Funcionalidad offline para zonas con mala conectividad, 
+con sincronización posterior. 
+• Ediciones simultáneas: permitr la historia clínica mientras un usuario esta en 
+terapia, bloqueo de misma actividad 3 seguidas en labases sin importar fecha 
+• Sesiones expiradas: Redirección al login si el usuario está inactivo, con 
+guardado automático del progreso. 
+ 
+ 
+ 
+ 
+ 
+ 
+Modulo 3: supervisión y reportes. 
+Este módulo contara con las siguientes funciones: 
+• Una vista por paciente de las horas evolucionadas totales en terapias, también 
+la posibilidad de buscar por cedula un paciente en específico y filtros de fecha 
+en las búsquedas 
+• al ingresar al paciente se podrá ver la información segmentada por área de 
+especialidad y detalle de horas y terapias realizadas. 
+• otra vista donde se podrá realizar un multiselect de varios pacientes y clicar en 
+un botón para generar PDF's donde se generarán una seria de PDF's con un 
+formato en específico con toda la historia clínica de cada paciente 
+seleccionado, se descargará un archivo en formato .zip que contendrá todos 
+los PDF el nombre de cada PDF será el número de cedula y nombre del 
+paciente, si no se cumplen las horas totales del mes no deben ser generados 
+los PDF a menos que sea aprobado por el rol de coodinador. 
+• Dashboards interactivos: Gráficos de progreso de pacientes, horas por 
+especialidad, etc. Seguimiento de KPI’s  
+• Exportación múltiple: Opciones adicionales a PDF (ej: Excel, CSV). 
+• Generación masiva de PDFs: Limitar la selección a 50 pacientes por lote para 
+evitar sobrecarga del servidor. 
+ 
+ 

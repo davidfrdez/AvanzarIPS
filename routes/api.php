@@ -19,8 +19,8 @@ Route::prefix('auth')->group(function () {
 
 // Ruta de roles (Fuera del prefijo 'auth' para que sea /api/roles)
 // *Nota: Si quieres que requiera login, muévela al grupo de Sanctum abajo.
-Route::get('/roles', [UserController::class, 'Roles']);
-Route::get('/especialidades', [UserController::class, 'Especialidades']);
+Route::get('/roles', [UserController::class, 'roles']);
+Route::get('/especialidades', [UserController::class, 'especialidades']);
 // Rutas de recuperación de contraseña
 Route::post('/password/forgot', [PasswordResetController::class, 'sendCode']);
 Route::post('/password/validate', [PasswordResetController::class, 'validateCode']);
@@ -36,4 +36,23 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/usuarios', [UserController::class, 'store']);
     Route::post('/pacientes', [PacienteController::class, 'store']);
     Route::post('/citas', [CitaController::class, 'store']);
+    
+    // --- Nuevos Endpoints Clínicos ---
+    Route::get('/objetivos', [App\Http\Controllers\ObjetivoController::class, 'index']);
+    Route::get('/terapias', [App\Http\Controllers\TerapiaController::class, 'index']);
+    Route::post('/terapias', [App\Http\Controllers\TerapiaController::class, 'store']);
+    
+    // --- Formularios Clínicos Complementarios ---
+    Route::apiResource('historias-ingreso', App\Http\Controllers\HistoriaClinicaIngresoController::class)->only(['index', 'store']);
+    Route::apiResource('consentimientos', App\Http\Controllers\ConsentimientoLegalController::class)->only(['index', 'store']);
+    Route::apiResource('ordenes-medicas', App\Http\Controllers\OrdenMedicaController::class)->only(['index', 'store']);
+    Route::apiResource('consultas-especialistas', App\Http\Controllers\ConsultaEspecialistaController::class)->only(['index', 'store']);
+    Route::apiResource('escalas-weefim', App\Http\Controllers\EscalaWeefimController::class)->only(['index', 'store']);
+
+    // --- Módulo de Reportería y Dashboard ---
+    Route::get('/dashboard/metrics', [App\Http\Controllers\DashboardController::class, 'metrics']);
+    Route::get('/auditoria', [App\Http\Controllers\AuditoriaController::class, 'index']);
+    
+    // --- Exportación y Documentos ---
+    Route::get('/pacientes/{id}/exportar-historia', [App\Http\Controllers\PdfController::class, 'descargarHistoria']);
 });

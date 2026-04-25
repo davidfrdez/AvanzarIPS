@@ -1,0 +1,111 @@
+Propuesta para el Sistema de Gestión de Historias 
+Clínicas de Avanzar IPS 
+Objetivo: Automatizar el proceso manual de historias clínicas, garantizando 
+trazabilidad, seguridad y eficiencia en cumplimiento con la normativa colombiana 
+(Ley 2015 de HCE y Ley 1581). 
+ 
+1. Estructura del Sistema 
+Módulo 1: Administración 
+Funciones Clave 
+1. Gestión de Usuarios y Roles 
+o Creación/edición de usuarios (médicos, coordinadores, 
+administradores). 
+o Roles predefinidos con permisos jerárquicos (ej: Médico no puede crear 
+roles). 
+o Desactivación de usuarios y reasignación de historiales clínicos. 
+2. Gestión de Objetivos, Actividades y Respuestas 
+o Creación de árbol gestión: Objetivo > Actividad > Respuesta. 
+o Asignación de objetivos a roles o usuarios específicos. 
+3. Seguridad y Cumplimiento 
+o Auditoría de cambios (quién, cuándo y qué se modificó). 
+o Encriptación AES-256 para contraseñas y firmas electrónicas. 
+o Políticas de contraseñas: 8+ caracteres, mayúsculas, números. 
+4. Carga Masiva y Programación 
+o Importación de pacientes desde archivos CSV/Excel, Al cargar 
+pacientes, verificar duplicados por cédula. 
+o Asignación automática de citas a médicos (con alertas por conflictos 
+de horario). 
+ 
+Módulo 2: Gestión de Historias Clínicas 
+Funciones Clave 
+1. Acceso y Visualización 
+o Ingreso con autenticación de usuario y contraseña. 
+o Vista de agenda diaria con citas programadas (nombre, hora, 
+especialidad). 
+2. Registro de Terapias 
+o Flujo: Búsqueda por cédula > Selección de objetivo > Actividad > 
+Respuestas. 
+o Textos predeterminados + notas libres (solicitud de activación al 
+administrador). 
+o Validación en tiempo real: 
+▪ Alertar si hay terapias duplicadas en la misma fecha. 
+▪ Alertar si un paciente se le ha realizado más de 3 veces 
+continuas el mismo objetivo. 
+3. Funcionalidades Avanzadas 
+o Guardado automático cada 5 minutos y al expirar la sesión (15 minutos 
+inactivo). 
+o Bloqueo de ediciones simultáneas en la misma actividad (evitar 
+conflictos). 
+o Notificaciones por página principal para registros pendientes. 
+o Acceso móvil: Versión responsive para registrar terapias desde tablets. 
+o Soporte offline: Funcionalidad limitada sin internet (sincronización 
+posterior) 
+ 
+ 
+ 
+ 
+Módulo 3: Supervisión y Reportes 
+Funciones Clave 
+1. Dashboards Interactivos 
+o KPIs: Horas totales del mes,  Horas por especialidad, horas por 
+paciente todo versus el objetivo de horas, progreso de pacientes, 
+efectividad de terapias. 
+o Filtros por fecha, médico, EPS o especialidad. 
+o Alertas predictivas: Notificar si un paciente está por incumplir metas 
+terapéuticas 
+2. Generación de Reportes 
+o Generación de PDFs con formato establecido para historias clínicas 
+solo de los pacientes con las horas planificadas completadas. 
+o Límite de 50 pacientes por lote según rendimiento del servidor 
+(aprobación de coordinador si no se cumplen horas mensuales, genera 
+un PDF). 
+o Exportación a Excel/CSV para análisis externo. 
+3. Cumplimiento Legal 
+o Anonimización de datos en reportes para auditorías externas. 
+o Almacenamiento seguro de PDFs por 20 años (Ley 2015). 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Información adicional 
+ 
+Fases del Proyecto 
+1. Fase 1 (2 mes aprox): Desarrollo del Módulo 1  
+2. Fase 2 ( 2 meses aprox):  Gestión de usuarios y registro básico de terapias  
+Modulo 2. 
+3. Fase 3 (2 meses aprox): Implementación del Módulo 3 (dashboards y reportes). 
+4. Fase 4: Pruebas piloto con 10 médicos y capacitación. 
+5. Lanzamiento Oficial: Migración total en 6 meses aprox si se realizar el proyecto 
+con las fases completas desde el inicio, si se ejecuta el desarrollo por contratos 
+por cada fase puede aumentar el tiempo. 
+ 
+ Beneficios Esperados 
+• Reducción de errores: Eliminación de registros manuales. 
+• Ahorro de tiempo: 40% menos en generación de reportes. 
+• Cumplimiento legal: Auditorías más eficientes y menos riesgo de sanciones. 
+• Aumento de capacidad: Aumento en la gestión de pacientes en número. 
+ 
+Próximos Pasos 
+1. Presentación de documentación, Aprobación del presupuesto y cronogramas. 
+2. Reunión con el equipo técnico para definir proveedores de hosting. 
+3. Validación de prototipos de interfaz por parte de los médicos. 
+ 
+Esta propuesta asegura que Avanzar IPS modernice sus 
+procesos clínicos con un sistema escalable, seguro y alineado 
+con las necesidades de sus profesionales. ¡Es hora de dejar 
+atrás el papel! 

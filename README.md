@@ -1,4 +1,4 @@
-# 🔐 API Avanzar IPS — Autenticación y Clínica
+# 🔐 API Avanzar IPS — Documentación Oficial para Frontend (React)
 
 **Proyecto:** Desarrollo Colombia | **Stack:** Laravel 11 + React  
 **Base URL:** `http://localhost:8000`
@@ -6,18 +6,20 @@
 ---
 
 ## 📌 Introducción
+Esta API gestiona el Módulo Administrativo, de Citas y de Historias Clínicas (Terapias) siguiendo estrictamente el Modelo Relacional y la Normativa HCE.
 
-Esta API gestiona el ciclo completo de vida de la sesión del usuario, la recuperación de credenciales y el flujo principal del **Módulo Clínico** (Pacientes, Médicos, Especialidades y Agendamiento de Citas). Se utiliza una arquitectura relacional normalizada y el campo `correo` como identificador único para los usuarios.
+> **Importante:** Debes enviar siempre los headers:
+> `Accept: application/json`
+> `Content-Type: application/json`
 
 ---
 
-## 🔑 Módulo de Autenticación
+## 🔑 Módulo de Autenticación (Sanctum SPA)
 
 ### 1. Iniciar Sesión (Login)
+`POST /api/auth/login`
 
-`POST /api/login`
-
-Valida las credenciales y retorna un token de acceso (Sanctum).
+Valida las credenciales y devuelve el Token Sanctum.
 
 **Body JSON:**
 ```json
@@ -27,39 +29,8 @@ Valida las credenciales y retorna un token de acceso (Sanctum).
 }
 ```
 
-**Response `200 OK`:**
-```json
-{
-  "status": "success",
-  "token": "1|abc123tokengenerado...",
-  "usuario": {
-    "nombre": "David",
-    "correo": "santiagodavid980@gmail.com"
-  }
-}
-```
-
----
-
 ### 2. Cerrar Sesión (Logout)
-
-`POST /api/logout` 🔒 *Requiere autenticación*
-
-Revoca el token actual del usuario.
-
-**Headers requeridos:**
-```
-Authorization: Bearer {tu_token_aqui}
-Accept: application/json
-```
-
-**Response `200 OK`:**
-```json
-{
-  "status": "success",
-  "message": "Sesión cerrada correctamente"
-}
-```
+`POST /api/auth/logout` 🔒 *Requiere Header: `Authorization: Bearer {token}`*
 
 ---
 
@@ -68,7 +39,6 @@ Accept: application/json
 Flujo de seguridad con códigos de **6 dígitos** con validez de **5 minutos**.
 
 ### 3. Solicitar Código
-
 `POST /api/password/forgot`
 
 Genera un OTP y lo envía vía **Hostinger SMTP** (`support@dalioss.com`).
@@ -80,10 +50,7 @@ Genera un OTP y lo envía vía **Hostinger SMTP** (`support@dalioss.com`).
 }
 ```
 
----
-
 ### 4. Validar Código
-
 `POST /api/password/validate`
 
 **Body JSON:**
@@ -94,10 +61,7 @@ Genera un OTP y lo envía vía **Hostinger SMTP** (`support@dalioss.com`).
 }
 ```
 
----
-
 ### 5. Restablecer Contraseña
-
 `POST /api/password/reset`
 
 **Body JSON:**
@@ -112,92 +76,80 @@ Genera un OTP y lo envía vía **Hostinger SMTP** (`support@dalioss.com`).
 
 ---
 
-## 👤 Módulo de Usuarios
+## 📋 Módulo de Catálogos (Básicos)
 
-### 6. Obtener Roles
+### 3. Obtener Roles
+`GET /api/roles`
 
-`GET /api/roles` 🔒 *Requiere autenticación*
+Retorna el listado de roles (1: Administrador, 2: Médico, etc).
 
-Retorna el listado de roles disponibles en el sistema (ideal para formularios de registro o gestión de usuarios en React).
+### 4. Obtener Especialidades
+`GET /api/especialidades`
 
-```php
-// routes/api.php
-Route::get('/roles', [UserController::class, 'Roles']);
-```
+Retorna el listado de especialidades.
 
-**Response `200 OK`:**
+### 5. Obtener Árbol de Objetivos
+`GET /api/objetivos` 🔒 *Requiere autenticación*
+
+Devuelve la lista anidada de **Objetivos -> Actividades -> Respuestas Predeterminadas**. Es **VITAL** para armar el formulario dinámico de Terapias en React.
+
+**Response `200 OK` (Pruébalo en Postman!):**
 ```json
-[
-  { "id": 1, "nombre": "Administrador" },
-  { "id": 2, "nombre": "Médico" },
-  { "id": 3, "nombre": "Paciente" }
-]
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "nombre": "Mejorar Movilidad Articular",
+      "actividades": [
+        {
+          "id": 1,
+          "nombre": "Estiramiento pasivo",
+          "respuestas": [
+            {
+              "id": 1,
+              "texto_predeterminado": "Logro completado sin dolor"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
 ```
 
 ---
 
-## 🏥 Módulo Clínico (Pacientes, Citas y Especialidades)
+## 🏥 Módulo de Pacientes y Citas
 
-> Todas las rutas de este módulo están protegidas. **Incluir siempre el header `Authorization: Bearer {token}`.**
-
-### 7. Registrar Paciente
-
+### 6. Registrar Paciente Completo
 `POST /api/pacientes` 🔒 *Requiere autenticación*
-
-Crea un nuevo paciente vinculado a su cédula, nombre completo y EPS.
 
 **Body JSON:**
 ```json
 {
+  "tipo_documento": "CC",
   "cedula": "1020304050",
-  "nombre": "Juan Pérez",
-  "eps": "Sura"
+  "nombres": "Juan",
+  "apellidos": "Pérez",
+  "fecha_nacimiento": "1990-05-15",
+  "sexo": "M",
+  "direccion": "Calle 123",
+  "barrio": "Centro",
+  "telefono": "3001234567",
+  "correo": "juan@example.com",
+  "ocupacion": "Ingeniero",
+  "eps": "Sura",
+  "regimen_salud": "Contributivo",
+  "categoria_eps": "A",
+  "nombre_responsable": "Maria Pérez",
+  "telefono_responsable": "3009876543",
+  "parentesco_responsable": "Madre"
 }
 ```
 
-**Response `201 Created`:**
-```json
-{
-  "status": "success",
-  "message": "Paciente registrado correctamente",
-  "paciente": {
-    "id": 1,
-    "cedula": "1020304050",
-    "nombre": "Juan Pérez",
-    "eps": "Sura"
-  }
-}
-```
-
----
-
-### 8. Obtener Especialidades
-
-`GET /api/especialidades` 🔒 *Requiere autenticación*
-
-Retorna el catálogo de especialidades disponibles (ideal para llenar los `<select>` en React).
-
-```php
-// routes/api.php
-Route::get('/especialidades', [UserController::class, 'Especialidades']);
-```
-
-**Response `200 OK`:**
-```json
-[
-  { "id": 1, "nombre": "Sin especificar" },
-  { "id": 2, "nombre": "Fisioterapia" },
-  { "id": 3, "nombre": "Fonoaudiología" }
-]
-```
-
----
-
-### 9. Programar Cita
-
+### 7. Agendar Cita
 `POST /api/citas` 🔒 *Requiere autenticación*
-
-Agenda una nueva cita vinculando al paciente, el médico y la especialidad requerida.
 
 **Body JSON:**
 ```json
@@ -209,36 +161,130 @@ Agenda una nueva cita vinculando al paciente, el médico y la especialidad reque
 }
 ```
 
-**Response `201 Created`:**
+---
+
+## ⚕️ Módulo Clínico (Terapias)
+
+### 8. Ver Historial de Terapias
+`GET /api/terapias` 🔒 *Requiere autenticación*
+
+Devuelve todas las terapias creadas hasta el momento de forma anidada con los resultados checkeados, pacentes y médicos asociados.
+
+### 9. Registrar Nueva Terapia
+`POST /api/terapias` 🔒 *Requiere autenticación*
+
+Registra una evolución clínica. Bloquea duplicados en el mismo día automáticamente.
+
+**Body JSON:**
 ```json
 {
-  "status": "success",
-  "message": "Cita programada correctamente",
-  "cita": {
-    "id": 1,
-    "programada_para": "2026-05-20 10:00:00"
-  }
+  "paciente_id": 1,
+  "objetivo_id": 1,
+  "actividad_id": 1,
+  "especialidad_id": 2,
+  "firma_electronica": "Firma del Dr. Daniel",
+  "resultados": [
+    {
+      "respuesta_id": 1,
+      "marcado": true,
+      "notas_libres": "El paciente mejoró mucho hoy"
+    }
+  ]
 }
 ```
 
 ---
 
-## 🛠️ Manejo de Errores
+## ⚕️ Formularios Clínicos y Legales (Complementarios)
 
-| Código | Mensaje            | Causa / Solución |
-|--------|--------------------|------------------|
-| `401`  | Unauthorized       | Credenciales de login incorrectas o falta de Token en cabeceras. |
-| `422`  | Validation Error   | Campos faltantes, código OTP expirado, o IDs inexistentes (ej. `especialidad_id` no válido). |
-| `500`  | Server Error       | Fallo de autenticación SMTP con Hostinger o error de base de datos. |
+### 10. API Resources Clínicos (Métodos GET y POST)
+Todas estas rutas heredan el soporte nativo REST y soportan consultas estandarizadas. Protegidas vía Sanctum.
+
+**Endpoints Disponibles Base:**
+* `GET y POST /api/historias-ingreso` (Reporte extenso inicial de consultas, antecedentes, etc)
+* `GET y POST /api/consentimientos` (Captura de aceptaciones legales y firmas de tutores)
+* `GET y POST /api/ordenes-medicas` (Remisiones médicas generales)
+* `GET y POST /api/consultas-especialistas` (Historias avanzadas y diagnóstico con métricas EEAG)
+* `GET y POST /api/escalas-weefim` (Métricas obligatorias infantiles de cognición y movilidad)
+
+*Ejemplo Payload `POST /api/escalas-weefim`:*
+*(El backend calculará automáticamente `puntaje_total` y `porcentaje_funcionalidad`)*
+```json
+{
+  "paciente_id": 1,
+  "fecha_evaluacion": "2026-05-20",
+  "subtotal_autocuidado": 40,
+  "subtotal_movilidad": 30,
+  "subtotal_cognicion": 35
+}
+```
 
 ---
 
-## 💡 Tips para React
+## 📊 Módulo 3: Dashboard y Reportería Administrativa
 
-- Para todas las rutas protegidas (Logout, Pacientes, Citas, Especialidades, Roles), incluir siempre el header `Authorization: Bearer {token}` recibido en el Login.
-- Enviar `especialidad_id`, `paciente_id` y `medico_id` siempre como **número entero**, no como string.
-- La `cedula` del paciente se envía como **string** para preservar ceros a la izquierda si aplica.
+### 11. Obtener Métricas Generales
+`GET /api/dashboard/metrics` 🔒 *Requiere autenticación (Módulo Admin)*
+
+Devuelve todos los KPIs y datos formateados para pintar las gráficas del estado actual de la IPS.
+
+**Response `200 OK`:**
+```json
+{
+  "status": "success",
+  "data": {
+    "kpis": {
+      "total_pacientes": 105,
+      "terapias_mes_actual": 42,
+      "citas_pendientes": 12,
+      "medicos_activos": 5
+    },
+    "graficos": {
+      "terapias_por_especialidad": [
+        { "especialidad": "Fisioterapia", "total": 20 },
+        { "especialidad": "Fonoaudiología", "total": 22 }
+      ],
+      "top_profesionales_mes": [
+        { "nombre": "Daniel (Secundario)", "terapias_realizadas": 35 }
+      ]
+    }
+  }
+}
+```
+
+### 12. Consultar Registros de Auditoría
+`GET /api/auditoria` 🔒 *Requiere autenticación (Módulo Admin)*
+
+Devuelve el registro histórico inmutable de quién hizo qué en el sistema. Ideal para la trazabilidad legal del software.
+
+**Response `200 OK`:**
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1,
+      "accion": "CREAR",
+      "nombre_tabla": "terapias",
+      "registro_id": 4,
+      "detalles": "{\"paciente_id\": 1, \"especialidad_id\": 2}",
+      "usuario": {
+        "id": 2,
+        "nombre": "Daniel (Secundario)"
+      },
+      "created_at": "2026-05-20T10:05:00.000000Z"
+    }
+  ]
+}
+```
+
+### 13. Exportar Historia Clínica PDF
+`GET /api/pacientes/{id}/exportar-historia` 🔒 *Requiere autenticación*
+
+Genera y descarga en crudo al navegador el archivo PDF con toda la información consolidada y la matriz evolutiva de terapias de un paciente, listo para entregar al Ministerio. Ojo: La petición GET debe incluir el encabezado de autenticación.
 
 ---
 
-*Documentación técnica para uso interno — David Fernández © 2026*
+## 🗄️ Procedimiento Actual de Base de Datos para Producción
+1. Asegúrate de ejecutar `composer install` si borras dependencias.
+2. Utiliza `php artisan migrate:fresh --seed` (Esto correrá los Seeders y creará Pacientes y Objetivos de prueba base que antes no existían).

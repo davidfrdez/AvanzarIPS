@@ -13,10 +13,26 @@ return new class extends Migration
     {
         Schema::create('pacientes', function (Blueprint $table) {
             $table->id();
-            // Cédula única para evitar que te dupliquen pacientes al cargar Excels
-            $table->string('cedula')->unique(); 
-            $table->string('nombre');
+            $table->string('tipo_documento');
+            $table->string('cedula')->unique();
+            $table->string('nombres');
+            $table->string('apellidos');
+            $table->date('fecha_nacimiento');
+            $table->string('sexo');
+            $table->string('direccion');
+            $table->string('barrio');
+            $table->string('telefono');
+            $table->string('correo')->nullable();
+            $table->string('ocupacion')->nullable();
             $table->string('eps');
+            $table->string('regimen_salud')->nullable();
+            $table->string('categoria_eps')->nullable();
+            
+            // Datos del responsable / acompañante
+            $table->string('nombre_responsable')->nullable();
+            $table->string('telefono_responsable')->nullable();
+            $table->string('parentesco_responsable')->nullable();
+            
             $table->timestamps();
         });
     }
