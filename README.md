@@ -88,6 +88,16 @@ Retorna el listado de roles (1: Administrador, 2: Médico, etc).
 
 Retorna el listado de especialidades.
 
+### 4.1 Obtener Usuarios
+`GET /api/usuarios` 🔒 *Requiere autenticación*
+
+Retorna la lista de todos los usuarios registrados en el sistema, con su respectivo rol y especialidad.
+
+### 4.2 Obtener Médicos
+`GET /api/medicos` 🔒 *Requiere autenticación*
+
+Retorna la lista de usuarios filtrados que actúan como médicos, especialistas o profesionales.
+
 ### 5. Obtener Árbol de Objetivos
 `GET /api/objetivos` 🔒 *Requiere autenticación*
 
@@ -147,6 +157,11 @@ Devuelve la lista anidada de **Objetivos -> Actividades -> Respuestas Predetermi
   "parentesco_responsable": "Madre"
 }
 ```
+
+### 6.1 Obtener Todos los Pacientes
+`GET /api/pacientes` 🔒 *Requiere autenticación*
+
+Devuelve la lista completa de pacientes registrados en el sistema.
 
 ### 7. Agendar Cita
 `POST /api/citas` 🔒 *Requiere autenticación*

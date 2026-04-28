@@ -45,4 +45,24 @@ class UserService
     {
         return Especialidad::select(['id', 'nombre'])->get();
     }
+
+    public function getAllUsers()
+    {
+        return User::with(['rol', 'especialidad'])->get();
+    }
+
+    public function getMedicos()
+    {
+        // Asumimos que los médicos tienen una especialidad o un rol específico
+        // Filtraremos aquellos que tengan especialidad_id o cuyo rol sugiera que son médicos/profesionales
+        return User::with(['rol', 'especialidad'])
+            ->whereNotNull('especialidad_id')
+            ->orWhereHas('rol', function ($query) {
+                $query->where('nombre', 'LIKE', '%médico%')
+                      ->orWhere('nombre', 'LIKE', '%medico%')
+                      ->orWhere('nombre', 'LIKE', '%especialista%')
+                      ->orWhere('nombre', 'LIKE', '%profesional%');
+            })
+            ->get();
+    }
 }

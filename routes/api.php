@@ -34,7 +34,12 @@ Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('auth/logout', [AuthController::class, 'logout']);
     Route::post('/usuarios', [UserController::class, 'store']);
+    Route::get('/usuarios', [UserController::class, 'index']);
+    Route::get('/medicos', [UserController::class, 'medicos']);
+    
     Route::post('/pacientes', [PacienteController::class, 'store']);
+    Route::get('/pacientes', [PacienteController::class, 'index']);
+    
     Route::post('/citas', [CitaController::class, 'store']);
     
     // --- Nuevos Endpoints Clínicos ---

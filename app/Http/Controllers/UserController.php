@@ -42,4 +42,26 @@ class UserController extends Controller
             'data' => $espcialidades
         ], 200); // 200 es el código correcto para respuestas GET exitosas
     }
+
+    public function index(): JsonResponse
+    {
+        $usuarios = $this->userService->getAllUsers();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Usuarios obtenidos exitosamente',
+            'data' => $usuarios
+        ], 200);
+    }
+
+    public function medicos(): JsonResponse
+    {
+        $medicos = $this->userService->getMedicos();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Médicos obtenidos exitosamente',
+            'data' => $medicos
+        ], 200);
+    }
 }

@@ -45,4 +45,9 @@ class PacienteService
             return $paciente;
         });
     }
+
+    public function getAllPacientes()
+    {
+        return Paciente::all();
+    }
 }

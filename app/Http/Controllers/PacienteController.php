@@ -13,6 +13,17 @@ class PacienteController extends Controller
         protected PacienteService $pacienteService
     ) {}
 
+    public function index(): JsonResponse
+    {
+        $pacientes = $this->pacienteService->getAllPacientes();
+        
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Pacientes obtenidos exitosamente',
+            'data' => $pacientes
+        ], 200);
+    }
+
     public function store(StorePacienteRequest $request): JsonResponse
     {
         $paciente = $this->pacienteService->createPaciente($request->validated());
