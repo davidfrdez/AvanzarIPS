@@ -1,63 +1,94 @@
 <?php
 
-use Illuminate\Http\Request;
+declare(strict_types=1);
+
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\PacienteController;
+use App\Http\Controllers\ActividadController;
+use App\Http\Controllers\AuditoriaController;
 use App\Http\Controllers\CitaController;
+use App\Http\Controllers\ConsentimientoLegalController;
+use App\Http\Controllers\ConsultaEspecialistaController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EscalaWeefimController;
+use App\Http\Controllers\HistoriaClinicaIngresoController;
+use App\Http\Controllers\ObjetivoController;
+use App\Http\Controllers\OrdenMedicaController;
+use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\PasswordResetController;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PdfController;
+use App\Http\Controllers\RespuestaController;
+use App\Http\Controllers\TerapiaController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Route;
 
 // ---------------------------------------------------
 // RUTAS PÚBLICAS (No requieren token)
 // ---------------------------------------------------
 
-// Rutas de autenticación
-Route::prefix('auth')->group(function () {
-    Route::post('login', [AuthController::class, 'login']); 
-});
+// Login con rate limiting (C10) — 5 intentos por minuto por IP+correo
+Route::post('auth/login', [AuthController::class, 'login'])
+    ->middleware('throttle:5,1');
 
-// Ruta de roles (Fuera del prefijo 'auth' para que sea /api/roles)
-// *Nota: Si quieres que requiera login, muévela al grupo de Sanctum abajo.
 Route::get('/roles', [UserController::class, 'roles']);
 Route::get('/especialidades', [UserController::class, 'especialidades']);
-// Rutas de recuperación de contraseña
-Route::post('/password/forgot', [PasswordResetController::class, 'sendCode']);
-Route::post('/password/validate', [PasswordResetController::class, 'validateCode']);
-Route::post('/password/reset', [PasswordResetController::class, 'resetPassword']);
 
+Route::post('/password/forgot', [PasswordResetController::class, 'sendCode'])
+    ->middleware('throttle:5,1');
+Route::post('/password/validate', [PasswordResetController::class, 'validateCode'])
+    ->middleware('throttle:10,1');
+Route::post('/password/reset', [PasswordResetController::class, 'resetPassword'])
+    ->middleware('throttle:5,1');
 
 // ---------------------------------------------------
-// RUTAS PROTEGIDAS (Requieren token)
+// RUTAS PROTEGIDAS (Requieren token Sanctum)
 // ---------------------------------------------------
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->group(function (): void {
+    // --- Auth ---
     Route::post('auth/logout', [AuthController::class, 'logout']);
-    Route::post('/usuarios', [UserController::class, 'store']);
-    Route::get('/usuarios', [UserController::class, 'index']);
-    Route::get('/medicos', [UserController::class, 'medicos']);
-    
-    Route::post('/pacientes', [PacienteController::class, 'store']);
-    Route::get('/pacientes', [PacienteController::class, 'index']);
-    
-    Route::post('/citas', [CitaController::class, 'store']);
-    
-    // --- Nuevos Endpoints Clínicos ---
-    Route::get('/objetivos', [App\Http\Controllers\ObjetivoController::class, 'index']);
-    Route::get('/terapias', [App\Http\Controllers\TerapiaController::class, 'index']);
-    Route::post('/terapias', [App\Http\Controllers\TerapiaController::class, 'store']);
-    
-    // --- Formularios Clínicos Complementarios ---
-    Route::apiResource('historias-ingreso', App\Http\Controllers\HistoriaClinicaIngresoController::class)->only(['index', 'store']);
-    Route::apiResource('consentimientos', App\Http\Controllers\ConsentimientoLegalController::class)->only(['index', 'store']);
-    Route::apiResource('ordenes-medicas', App\Http\Controllers\OrdenMedicaController::class)->only(['index', 'store']);
-    Route::apiResource('consultas-especialistas', App\Http\Controllers\ConsultaEspecialistaController::class)->only(['index', 'store']);
-    Route::apiResource('escalas-weefim', App\Http\Controllers\EscalaWeefimController::class)->only(['index', 'store']);
 
-    // --- Módulo de Reportería y Dashboard ---
-    Route::get('/dashboard/metrics', [App\Http\Controllers\DashboardController::class, 'metrics']);
-    Route::get('/auditoria', [App\Http\Controllers\AuditoriaController::class, 'index']);
-    
-    // --- Exportación y Documentos ---
-    Route::get('/pacientes/{id}/exportar-historia', [App\Http\Controllers\PdfController::class, 'descargarHistoria']);
+    // --- Usuarios (Personal y Profesionales) ---
+    Route::get('/usuarios', [UserController::class, 'index']);
+    Route::post('/usuarios', [UserController::class, 'store']);
+    Route::get('/usuarios/{user}', [UserController::class, 'show']);
+    Route::put('/usuarios/{user}', [UserController::class, 'update']);              // FE-3
+    Route::delete('/usuarios/{user}', [UserController::class, 'destroy']);          // FE-3
+    Route::put('/usuarios/{user}/desactivar', [UserController::class, 'desactivar']); // FE-3
+    Route::put('/usuarios/{user}/activar', [UserController::class, 'activar']);
+    Route::get('/medicos', [UserController::class, 'medicos']);
+
+    // --- Pacientes ---
+    Route::get('/pacientes', [PacienteController::class, 'index']);
+    Route::post('/pacientes', [PacienteController::class, 'store']);
+    Route::get('/pacientes/{paciente}', [PacienteController::class, 'show']);
+    Route::delete('/pacientes/{paciente}', [PacienteController::class, 'destroy']);
+
+    // --- Citas ---
+    Route::post('/citas', [CitaController::class, 'store']);
+
+    // --- Árbol Clínico (FE-2 — M2) ---
+    Route::apiResource('objetivos', ObjetivoController::class);
+    Route::apiResource('actividades', ActividadController::class)
+        ->only(['store', 'update', 'destroy'])
+        ->parameters(['actividades' => 'actividad']);
+    Route::apiResource('respuestas', RespuestaController::class)
+        ->only(['store', 'update', 'destroy']);
+
+    // --- Terapias ---
+    Route::get('/terapias', [TerapiaController::class, 'index']);
+    Route::post('/terapias', [TerapiaController::class, 'store']);
+
+    // --- Formularios Clínicos Complementarios ---
+    Route::apiResource('historias-ingreso', HistoriaClinicaIngresoController::class)->only(['index', 'store']);
+    Route::apiResource('consentimientos', ConsentimientoLegalController::class)->only(['index', 'store']);
+    Route::apiResource('ordenes-medicas', OrdenMedicaController::class)->only(['index', 'store']);
+    Route::apiResource('consultas-especialistas', ConsultaEspecialistaController::class)->only(['index', 'store']);
+    Route::apiResource('escalas-weefim', EscalaWeefimController::class)->only(['index', 'store']);
+
+    // --- Reportería y Dashboard ---
+    Route::get('/dashboard/metrics', [DashboardController::class, 'metrics']);
+    Route::get('/auditoria', [AuditoriaController::class, 'index']);
+
+    // --- Exportación ---
+    Route::get('/pacientes/{id}/exportar-historia', [PdfController::class, 'descargarHistoria']);
 });

@@ -1,23 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Permiso extends Model
 {
     protected $table = 'permisos';
 
-    protected $fillable = ['nombre', 'slug', 'descripcion'];
+    protected $fillable = ['nombre', 'vista', 'descripcion'];
 
-    public function roles()
+    public function roles(): BelongsToMany
     {
-        // Un permiso pertenece a muchos roles
         return $this->belongsToMany(Rol::class, 'permiso_rol');
-    }
-    public function permisos()
-    {
-        // belongsToMany(ModeloRelacionado, tabla_pivote, foreign_key_local, foreign_key_relacionada)
-        return $this->belongsToMany(Permiso::class, 'permiso_rol', 'rol_id', 'permiso_id');
     }
 }

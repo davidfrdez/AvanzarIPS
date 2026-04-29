@@ -1,47 +1,47 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
-class StoreUserRequest extends FormRequest
+final class StoreUserRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return true;
+        $user = $this->user();
+        return $user !== null && $user->tienePermiso('usuarios.crear');
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
+    /** @return array<string, ValidationRule|array<int, mixed>|string> */
     public function rules(): array
     {
         return [
             'nombre' => ['required', 'string', 'max:255'],
-            'correo' => ['required', 'email', 'unique:usuarios,correo'],
-            'rol_id' => ['required', 'exists:roles,id'],
-            'password' => [
-                'required',
-                'string',
-                Password::min(8) // Políticas de seguridad requeridas
-                    ->mixedCase() // Requiere mayúsculas y minúsculas
-                    ->numbers(),  // Requiere números
+            'correo' => [
+                'required', 'email:rfc',
+                Rule::unique('usuarios', 'correo')->whereNull('deleted_at'),
             ],
-            
+            'rol_id' => ['required', 'integer', 'exists:roles,id'],
+            'especialidad_id' => ['nullable', 'integer', 'exists:especialidades,id'],
+            'password' => [
+                'required', 'string',
+                Password::min(8)->mixedCase()->numbers(),
+            ],
         ];
     }
+
+    /** @return array<string, string> */
     public function messages(): array
     {
         return [
             'correo.unique' => 'Este correo ya está registrado en el sistema.',
-            'rol_id.exists' => 'El rol seleccionado no es válido.'
+            'rol_id.exists' => 'El rol seleccionado no es válido.',
+            'especialidad_id.exists' => 'La especialidad seleccionada no es válida.',
         ];
     }
 }
