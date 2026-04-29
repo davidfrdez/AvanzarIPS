@@ -1,20 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Rol;
+use Illuminate\Database\Seeder;
+
 class RolesSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Creamos los roles usando Eloquent
-        Rol::create(['nombre' => 'Administrador']);
-        Rol::create(['nombre' => 'Medico']);
-        Rol::create(['nombre' => 'Coordinador']);
+        $roles = ['Administrador', 'Medico', 'Coordinador'];
+
+        foreach ($roles as $nombre) {
+            Rol::updateOrCreate(['nombre' => $nombre], ['nombre' => $nombre]);
+        }
     }
 }

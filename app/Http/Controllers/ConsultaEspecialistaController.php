@@ -27,11 +27,11 @@ class ConsultaEspecialistaController extends Controller
             'firma_electronica' => 'required|string',
         ]);
 
+        // El cast 'encrypted' del modelo se encarga de cifrar.
         $consulta = ConsultaEspecialista::create([
             ...$validated,
             'medico_id' => $request->user()->id,
-            'firma_electronica' => encrypt($validated['firma_electronica']),
-            'fecha_hora' => now()
+            'fecha_hora' => now(),
         ]);
 
         return response()->json([

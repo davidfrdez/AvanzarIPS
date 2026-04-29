@@ -1,46 +1,64 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Traits;
 
+use App\Enums\AccionAuditoria;
 use App\Models\AuditoriaCambio;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * Trait Auditable — registra cambios en `auditoria_cambios` para cumplir Ley 2015.
+ *
+ * Registra eventos created/updated/deleted/restored del modelo. Captura IP
+ * y User-Agent del request actual, además del usuario autenticado.
+ */
 trait Auditable
 {
-    public static function bootAuditable()
+    public static function bootAuditable(): void
     {
-        // Rastrear Creación
-        static::created(function ($model) {
-            self::registrarAuditoria('CREAR', $model);
+        static::created(function (Model $model): void {
+            self::registrarAuditoria(AccionAuditoria::CREAR, $model);
         });
 
-        // Rastrear Actualización
-        static::updated(function ($model) {
-            self::registrarAuditoria('EDITAR', $model);
+        static::updated(function (Model $model): void {
+            self::registrarAuditoria(AccionAuditoria::EDITAR, $model);
         });
 
-        // Rastrear Eliminación (si tienes SoftDeletes, esto atrapa el borrado)
-        static::deleted(function ($model) {
-            self::registrarAuditoria('ELIMINAR', $model);
+        static::deleted(function (Model $model): void {
+            self::registrarAuditoria(AccionAuditoria::ELIMINAR, $model);
         });
+
+        if (method_exists(static::class, 'restored')) {
+            static::restored(function (Model $model): void {
+                self::registrarAuditoria(AccionAuditoria::RESTAURAR, $model);
+            });
+        }
     }
 
-    protected static function registrarAuditoria($accion, $model)
+    protected static function registrarAuditoria(AccionAuditoria $accion, Model $model): void
     {
-        // Solo auditar si hay un usuario logueado haciéndolo (Sanctum/Auth)
-        if (Auth::check()) {
-            
-            // Si es edición, capturar solo los campos "Sucios" (lo que cambió). 
-            // Si es nuevo o borrado, capturar todo el objeto.
-            $detalles = $accion === 'EDITAR' ? $model->getDirty() : $model->getAttributes();
+        $detalles = $accion === AccionAuditoria::EDITAR
+            ? $model->getDirty()
+            : $model->getAttributes();
 
-            AuditoriaCambio::create([
-                'usuario_id'   => Auth::id(),
-                'accion'       => $accion,
-                'nombre_tabla' => $model->getTable(),
-                'registro_id'  => $model->id,
-                'detalles'     => json_encode($detalles)
-            ]);
+        // No registrar si no hay nada en el dirty array (false-positive de updated())
+        if ($accion === AccionAuditoria::EDITAR && empty($detalles)) {
+            return;
         }
+
+        $request = request();
+
+        AuditoriaCambio::create([
+            'usuario_id'   => Auth::id(),
+            'accion'       => $accion->value,
+            'nombre_tabla' => $model->getTable(),
+            'registro_id'  => $model->getKey(),
+            'detalles'     => json_encode($detalles, JSON_UNESCAPED_UNICODE),
+            'ip'           => $request?->ip(),
+            'user_agent'   => substr((string) ($request?->userAgent() ?? ''), 0, 500),
+        ]);
     }
 }

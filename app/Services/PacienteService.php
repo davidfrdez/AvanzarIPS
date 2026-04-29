@@ -1,53 +1,65 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
+use App\DTOs\HistoriaClinicaIngresoDTO;
+use App\DTOs\PacienteDTO;
+use App\Models\HistoriaClinicaIngreso;
 use App\Models\Paciente;
-use App\Models\AuditoriaCambio;
+use App\Services\Contracts\PacienteServiceInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
+use Throwable;
 
-class PacienteService
+final class PacienteService implements PacienteServiceInterface
 {
-    public function createPaciente(array $data)
+    /**
+     * Crea Paciente + HistoriaClinicaIngreso opcional en una transacción atómica.
+     * La auditoría se delega al Trait Auditable (boot hooks).
+     *
+     * @throws Throwable
+     */
+    public function create(PacienteDTO $paciente, ?HistoriaClinicaIngresoDTO $ingreso = null): Paciente
     {
-        return DB::transaction(function () use ($data) {
-            
-            $paciente = Paciente::create([
-                'tipo_documento' => $data['tipo_documento'],
-                'cedula' => $data['cedula'],
-                'nombres' => $data['nombres'],
-                'apellidos' => $data['apellidos'],
-                'fecha_nacimiento' => $data['fecha_nacimiento'],
-                'sexo' => $data['sexo'],
-                'direccion' => $data['direccion'],
-                'barrio' => $data['barrio'],
-                'telefono' => $data['telefono'],
-                'correo' => $data['correo'] ?? null,
-                'ocupacion' => $data['ocupacion'] ?? null,
-                'eps' => $data['eps'],
-                'regimen_salud' => $data['regimen_salud'] ?? null,
-                'categoria_eps' => $data['categoria_eps'] ?? null,
-                'nombre_responsable' => $data['nombre_responsable'] ?? null,
-                'telefono_responsable' => $data['telefono_responsable'] ?? null,
-                'parentesco_responsable' => $data['parentesco_responsable'] ?? null,
-            ]);
+        return DB::transaction(function () use ($paciente, $ingreso): Paciente {
+            /** @var Paciente $model */
+            $model = Paciente::create($paciente->toModelArray());
 
-            // Trazabilidad legal obligatoria
-            AuditoriaCambio::create([
-                'usuario_id' => Auth::id() ?? 1, // Fallback a 1 si se está usando Tinker/Semillas
-                'accion' => 'CREAR',
-                'nombre_tabla' => 'pacientes',
-                'registro_id' => $paciente->id,
-                'detalles' => 'Se registró un nuevo paciente con cédula: ' . $paciente->cedula,
-            ]);
+            if ($ingreso instanceof HistoriaClinicaIngresoDTO) {
+                HistoriaClinicaIngreso::create($ingreso->toModelArray($model->id));
+            }
 
-            return $paciente;
+            return $model->fresh(['historiasClinicasIngreso']) ?? $model;
         });
     }
 
-    public function getAllPacientes()
+    /** @throws Throwable */
+    public function update(Paciente $paciente, PacienteDTO $dto): Paciente
     {
-        return Paciente::all();
+        return DB::transaction(function () use ($paciente, $dto): Paciente {
+            $paciente->update($dto->toModelArray());
+
+            return $paciente->refresh();
+        });
+    }
+
+    public function softDelete(Paciente $paciente): bool
+    {
+        return (bool) $paciente->delete();
+    }
+
+    public function findByCedula(string $cedula): ?Paciente
+    {
+        return Paciente::query()->where('cedula', $cedula)->first();
+    }
+
+    public function paginate(int $perPage = 25): LengthAwarePaginator
+    {
+        return Paciente::query()
+            ->orderBy('apellidos')
+            ->orderBy('nombres')
+            ->paginate($perPage);
     }
 }

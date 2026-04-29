@@ -39,7 +39,7 @@ class PermisoRolSeeder extends Seeder
                 'pdf.masivo', 
                 'datos.exportar'
             ],
-            'Médico' => [
+            'Medico' => [
                 'agenda.ver', 
                 'pacientes.buscar', 
                 'pacientes.crear', 

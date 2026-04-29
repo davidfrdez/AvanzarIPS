@@ -1,12 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Paciente extends Model
 {
-    use HasFactory, \App\Traits\Auditable;
+    use HasFactory, SoftDeletes, \App\Traits\Auditable;
 
     protected $table = 'pacientes';
 
@@ -30,17 +35,15 @@ class Paciente extends Model
         'parentesco_responsable',
     ];
 
-    // Relación: Un paciente tiene muchas citas
-    public function citas()
-    {
-        return $this->hasMany(Cita::class);
-    }
+    protected $casts = [
+        'fecha_nacimiento' => 'date',
+    ];
 
-    // Nuevas relaciones clínicas
-    public function historiasClinicasIngreso() { return $this->hasMany(HistoriaClinicaIngreso::class); }
-    public function consentimientosLegales() { return $this->hasMany(ConsentimientoLegal::class); }
-    public function ordenesMedicas() { return $this->hasMany(OrdenMedica::class); }
-    public function consultasEspecialistas() { return $this->hasMany(ConsultaEspecialista::class); }
-    public function escalasWeefim() { return $this->hasMany(EscalaWeefim::class); }
-    public function terapias() { return $this->hasMany(Terapia::class); }
+    public function citas(): HasMany { return $this->hasMany(Cita::class); }
+    public function historiasClinicasIngreso(): HasMany { return $this->hasMany(HistoriaClinicaIngreso::class); }
+    public function consentimientosLegales(): HasMany { return $this->hasMany(ConsentimientoLegal::class); }
+    public function ordenesMedicas(): HasMany { return $this->hasMany(OrdenMedica::class); }
+    public function consultasEspecialistas(): HasMany { return $this->hasMany(ConsultaEspecialista::class); }
+    public function escalasWeefim(): HasMany { return $this->hasMany(EscalaWeefim::class); }
+    public function terapias(): HasMany { return $this->hasMany(Terapia::class); }
 }

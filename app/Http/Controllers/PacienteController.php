@@ -1,37 +1,59 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePacienteRequest;
-use App\Services\PacienteService;
-use Illuminate\Http\Request;
+use App\Http\Resources\PacienteResource;
+use App\Models\Paciente;
+use App\Services\Contracts\PacienteServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class PacienteController extends Controller
 {
     public function __construct(
-        protected PacienteService $pacienteService
-    ) {}
+        protected readonly PacienteServiceInterface $pacienteService
+    ) {
+    }
 
-    public function index(): JsonResponse
+    public function index(): AnonymousResourceCollection
     {
-        $pacientes = $this->pacienteService->getAllPacientes();
-        
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Pacientes obtenidos exitosamente',
-            'data' => $pacientes
-        ], 200);
+        $perPage = (int) request()->integer('per_page', 25);
+        $perPage = max(1, min($perPage, 100));
+
+        return PacienteResource::collection(
+            $this->pacienteService->paginate($perPage)
+        );
+    }
+
+    public function show(Paciente $paciente): PacienteResource
+    {
+        return new PacienteResource(
+            $paciente->load('historiasClinicasIngreso')
+        );
     }
 
     public function store(StorePacienteRequest $request): JsonResponse
     {
-        $paciente = $this->pacienteService->createPaciente($request->validated());
+        $paciente = $this->pacienteService->create(
+            $request->toPacienteDTO(),
+            $request->toIngresoDTO()
+        );
+
+        return (new PacienteResource($paciente))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function destroy(Paciente $paciente): JsonResponse
+    {
+        $this->pacienteService->softDelete($paciente);
 
         return response()->json([
             'status' => 'success',
-            'message' => 'Paciente registrado exitosamente.',
-            'data' => $paciente
-        ], 201);
+            'message' => 'Paciente eliminado (soft delete) correctamente.',
+        ]);
     }
 }

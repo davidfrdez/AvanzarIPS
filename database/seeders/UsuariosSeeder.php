@@ -1,44 +1,49 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Especialidad;
+use App\Models\Rol;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use App\Models\User; // Asegúrate de que este sea el nombre correcto de tu modelo (User o Usuario)
-use App\Models\Rol;
 
 class UsuariosSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Buscamos el ID del rol Administrador y Médico
         $rolAdmin = Rol::where('nombre', 'Administrador')->first();
-        $rolmedico = Rol::where('nombre', 'Medico')->first();
-        
-        // Asignamos el ID encontrado
-        $adminId = $rolAdmin->id;
-        $medicoId = $rolmedico->id;
-        
-        // 1. Creación del Administrador (Sin especialidad -> ID 1)
-        User::create([
-            'nombre' => 'David',
-            'rol_id' => $adminId,
-            'especialidad_id' => 1, // <-- Agregado: Sin especificar
-            'correo' => 'santiagodavid980@gmail.com',
-            'password' => Hash::make('admin1234'),
-        ]);
+        $rolMedico = Rol::where('nombre', 'Medico')->first();
 
-        // 2. Creación del Médico (Fisioterapia -> ID 2)
-        User::create([
-            'nombre' => 'Daniel (Secundario)',
-            'rol_id' => $medicoId,
-            'especialidad_id' => 2, // <-- Agregado: Fisioterapia
-            'correo' => 'fepiperuiz11@gmail.com',
-            'password' => Hash::make('admin1234'),
-        ]);
+        $espSinEspecificar = Especialidad::query()->orderBy('id')->first();
+        $espFisioterapia = Especialidad::where('nombre', 'LIKE', '%Fisio%')->first() ?? $espSinEspecificar;
+
+        if ($rolAdmin) {
+            User::updateOrCreate(
+                ['correo' => 'santiagodavid980@gmail.com'],
+                [
+                    'nombre' => 'David',
+                    'rol_id' => $rolAdmin->id,
+                    'especialidad_id' => $espSinEspecificar?->id,
+                    'password' => Hash::make('admin1234'),
+                    'esta_activo' => true,
+                ]
+            );
+        }
+
+        if ($rolMedico) {
+            User::updateOrCreate(
+                ['correo' => 'fepiperuiz11@gmail.com'],
+                [
+                    'nombre' => 'Daniel (Secundario)',
+                    'rol_id' => $rolMedico->id,
+                    'especialidad_id' => $espFisioterapia?->id,
+                    'password' => Hash::make('admin1234'),
+                    'esta_activo' => true,
+                ]
+            );
+        }
     }
 }

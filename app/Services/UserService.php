@@ -1,68 +1,115 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
-use App\Models\User;
-use App\Models\Rol;
-use App\Models\AuditoriaCambio;
 use App\Models\Especialidad;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Rol;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Throwable;
 
-class UserService
+final class UserService
 {
-    public function createUser(array $data)
+    /**
+     * @param  array<string, mixed>  $data
+     * @throws Throwable
+     */
+    public function createUser(array $data): User
     {
-        return DB::transaction(function () use ($data) {
-            $user = User::create([
-                'nombre' => $data['nombre'],
-                'correo' => $data['correo'],
-                'rol_id' => $data['rol_id'],
-                'especialidad_id' => $data['especialidad_id'] ?? null,
-                'password' => Hash::make($data['password']),
+        return DB::transaction(static function () use ($data): User {
+            return User::create([
+                'nombre' => (string) $data['nombre'],
+                'correo' => (string) $data['correo'],
+                'rol_id' => (int) $data['rol_id'],
+                'especialidad_id' => isset($data['especialidad_id']) ? (int) $data['especialidad_id'] : null,
+                'password' => Hash::make((string) $data['password']),
                 'esta_activo' => true,
             ]);
-
-            AuditoriaCambio::create([
-                'usuario_id' => Auth::id() ?? 1,
-                'accion' => 'CREAR',
-                'nombre_tabla' => 'usuarios',
-                'registro_id' => $user->id,
-                'detalles' => 'Se creó un nuevo usuario con rol_id: ' . $user->rol_id,
-            ]);
-
-            return $user;
         });
     }
 
-    public function getRoles()
+    /**
+     * @param  array<string, mixed>  $data
+     * @throws Throwable
+     */
+    public function updateUser(User $user, array $data): User
     {
-        return Rol::select(['id', 'nombre'])->get();
+        return DB::transaction(function () use ($user, $data): User {
+            $payload = array_filter([
+                'nombre' => $data['nombre'] ?? null,
+                'correo' => $data['correo'] ?? null,
+                'rol_id' => isset($data['rol_id']) ? (int) $data['rol_id'] : null,
+                'especialidad_id' => array_key_exists('especialidad_id', $data)
+                    ? ($data['especialidad_id'] !== null ? (int) $data['especialidad_id'] : null)
+                    : null,
+            ], static fn ($v): bool => $v !== null);
+
+            if (!empty($data['password'])) {
+                $payload['password'] = Hash::make((string) $data['password']);
+            }
+
+            $user->update($payload);
+
+            return $user->refresh();
+        });
     }
 
-    public function getEspecialidades()
+    public function desactivar(User $user): User
     {
-        return Especialidad::select(['id', 'nombre'])->get();
+        $user->update(['esta_activo' => false]);
+        return $user->refresh();
     }
 
-    public function getAllUsers()
+    public function activar(User $user): User
     {
-        return User::with(['rol', 'especialidad'])->get();
+        $user->update(['esta_activo' => true]);
+        return $user->refresh();
     }
 
-    public function getMedicos()
+    public function softDelete(User $user): bool
     {
-        // Asumimos que los médicos tienen una especialidad o un rol específico
-        // Filtraremos aquellos que tengan especialidad_id o cuyo rol sugiera que son médicos/profesionales
-        return User::with(['rol', 'especialidad'])
-            ->whereNotNull('especialidad_id')
-            ->orWhereHas('rol', function ($query) {
-                $query->where('nombre', 'LIKE', '%médico%')
-                      ->orWhere('nombre', 'LIKE', '%medico%')
-                      ->orWhere('nombre', 'LIKE', '%especialista%')
-                      ->orWhere('nombre', 'LIKE', '%profesional%');
+        $user->update(['esta_activo' => false]);
+        return (bool) $user->delete();
+    }
+
+    /** @return Collection<int, Rol> */
+    public function getRoles(): Collection
+    {
+        return Rol::query()->select(['id', 'nombre'])->orderBy('nombre')->get();
+    }
+
+    /** @return Collection<int, Especialidad> */
+    public function getEspecialidades(): Collection
+    {
+        return Especialidad::query()->select(['id', 'nombre'])->orderBy('nombre')->get();
+    }
+
+    /** @return Collection<int, User> */
+    public function getAllUsers(): Collection
+    {
+        return User::query()->with(['rol', 'especialidad'])->orderBy('nombre')->get();
+    }
+
+    /** @return Collection<int, User> */
+    public function getMedicos(): Collection
+    {
+        return User::query()
+            ->with(['rol', 'especialidad'])
+            ->where('esta_activo', true)
+            ->where(function ($q): void {
+                $q->whereNotNull('especialidad_id')
+                  ->orWhereHas('rol', static function ($r): void {
+                      $r->where('nombre', 'LIKE', '%médic%')
+                        ->orWhere('nombre', 'LIKE', '%medic%')
+                        ->orWhere('nombre', 'LIKE', '%especialista%')
+                        ->orWhere('nombre', 'LIKE', '%profesional%');
+                  });
             })
+            ->orderBy('nombre')
             ->get();
     }
 }

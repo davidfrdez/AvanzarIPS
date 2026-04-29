@@ -1,67 +1,95 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
+use App\Http\Resources\UserResource;
+use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class UserController extends Controller
 {
     public function __construct(
-        protected UserService $userService
-    ) {}
+        protected readonly UserService $userService
+    ) {
+    }
 
     public function store(StoreUserRequest $request): JsonResponse
     {
         $user = $this->userService->createUser($request->validated());
 
+        return (new UserResource($user->load(['rol', 'especialidad'])))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function update(UpdateUserRequest $request, User $user): UserResource
+    {
+        $updated = $this->userService->updateUser($user, $request->validated());
+        return new UserResource($updated->load(['rol', 'especialidad']));
+    }
+
+    public function destroy(User $user): JsonResponse
+    {
+        $this->userService->softDelete($user);
+
         return response()->json([
             'status' => 'success',
-            'message' => 'Usuario creado y asignado al rol exitosamente.',
-            'data' => $user
-        ], 201);
+            'message' => 'Usuario eliminado (soft delete) y desactivado correctamente.',
+        ]);
     }
+
+    public function desactivar(User $user): UserResource
+    {
+        return new UserResource(
+            $this->userService->desactivar($user)->load(['rol', 'especialidad'])
+        );
+    }
+
+    public function activar(User $user): UserResource
+    {
+        return new UserResource(
+            $this->userService->activar($user)->load(['rol', 'especialidad'])
+        );
+    }
+
+    public function show(User $user): UserResource
+    {
+        return new UserResource($user->load(['rol.permisos', 'especialidad']));
+    }
+
+    public function index(): AnonymousResourceCollection
+    {
+        return UserResource::collection(
+            $this->userService->getAllUsers()
+        );
+    }
+
+    public function medicos(): AnonymousResourceCollection
+    {
+        return UserResource::collection(
+            $this->userService->getMedicos()
+        );
+    }
+
     public function roles(): JsonResponse
     {
-        $roles = $this->userService->getRoles();
-
         return response()->json([
             'status' => 'success',
-            'message' => 'Roles obtenidos exitosamente',
-            'data' => $roles
-        ], 200); // 200 es el código correcto para respuestas GET exitosas
+            'data' => $this->userService->getRoles(),
+        ]);
     }
+
     public function especialidades(): JsonResponse
     {
-        $espcialidades = $this->userService->getEspecialidades();
-
         return response()->json([
             'status' => 'success',
-            'message' => 'Especialidades obtenidos exitosamente',
-            'data' => $espcialidades
-        ], 200); // 200 es el código correcto para respuestas GET exitosas
-    }
-
-    public function index(): JsonResponse
-    {
-        $usuarios = $this->userService->getAllUsers();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Usuarios obtenidos exitosamente',
-            'data' => $usuarios
-        ], 200);
-    }
-
-    public function medicos(): JsonResponse
-    {
-        $medicos = $this->userService->getMedicos();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Médicos obtenidos exitosamente',
-            'data' => $medicos
-        ], 200);
+            'data' => $this->userService->getEspecialidades(),
+        ]);
     }
 }
