@@ -27,3 +27,17 @@ Actualmente, la creación de pacientes desde el frontend envía el payload compl
     *   `nombre_responsable` (string, nullable)
     *   `telefono_responsable` (string, nullable)
     *   `parentesco_responsable` (string, nullable)
+
+## 2. Módulo de Administración - Árbol Clínico (NUEVO)
+El frontend ya cuenta con el gestor visual (ActivitiesManager). Se necesitan los endpoints para el CRUD:
+*   `POST`, `PUT`, `DELETE` para `/api/objetivos`
+*   `POST`, `PUT`, `DELETE` para `/api/actividades` (Ramas)
+*   `POST`, `PUT`, `DELETE` para `/api/respuestas` (Hojas)
+
+## 3. Módulo de Administración - Personal y Carga Masiva
+*   `PUT /api/usuarios/{id}` (Editar usuario/rol)
+*   `DELETE /api/usuarios/{id}` o `PUT /api/usuarios/{id}/desactivar` (Baja de profesional)
+*   `POST /api/pacientes/carga-masiva` (Procesar CSV/Excel)
+
+## 4. Módulo de Reportes - Generación en Lote (NUEVO)
+*   `POST /api/reportes/generar-zip` (Debe recibir un array de `paciente_ids`, generar los PDFs en memoria y devolver un archivo `.zip` consolidado).
