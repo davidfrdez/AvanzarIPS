@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\ActividadController;
 use App\Http\Controllers\AuditoriaController;
+use App\Http\Controllers\CargasMasivasController;
 use App\Http\Controllers\CitaController;
 use App\Http\Controllers\ConsentimientoLegalController;
 use App\Http\Controllers\ConsultaEspecialistaController;
@@ -96,4 +97,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // --- Exportación ---
     Route::get('/pacientes/{id}/exportar-historia', [PdfController::class, 'descargarHistoria']);
+
+    // --- Cargas masivas (catálogo + plantillas ejemplo) ---
+    Route::get('/cargas-masivas', [CargasMasivasController::class, 'index']);
+    Route::get('/cargas-masivas/citas/plantilla', [CargasMasivasController::class, 'plantillaCitas']);
+    Route::get('/cargas-masivas/usuarios/plantilla', [CargasMasivasController::class, 'plantillaUsuarios']);
 });

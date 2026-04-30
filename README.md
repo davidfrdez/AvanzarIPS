@@ -183,9 +183,23 @@ Crea paciente y, opcionalmente, su Historia Clínica de Ingreso en una transacci
 - `fecha_nacimiento` no puede ser posterior a hoy.
 - Bloque `ingreso` es opcional.
 
-### 📥 Carga masiva por Excel
+### 📥 Cargas masivas por Excel
 
-Flujo de dos pasos para que un coordinador cargue muchos pacientes de una vez. Permiso requerido: `pacientes.crear`.
+> **Catálogo de cargas:** `GET /api/cargas-masivas` devuelve la lista de tipos disponibles (con su URL de plantilla, URL de import y flag `disponible`). El frontend debe consumir este endpoint y renderizar la pantalla dinámicamente, **sin hardcodear rutas**.
+
+| Tipo | Plantilla | Import | Estado |
+|------|-----------|--------|--------|
+| **Pacientes** | `GET /api/pacientes/plantilla-excel` | `POST /api/pacientes/importar-excel` | ✅ Disponible |
+| **Citas** (ejemplo) | `GET /api/cargas-masivas/citas/plantilla` | _(no implementado)_ | 🟡 Solo plantilla |
+| **Usuarios** (ejemplo) | `GET /api/cargas-masivas/usuarios/plantilla` | _(no implementado)_ | 🟡 Solo plantilla |
+
+Las plantillas de **citas** y **usuarios** existen para que el equipo y el frontend puedan diseñar contra un contrato concreto cuando se prioricen esos imports. Hoy solo descargan el xlsx con encabezados + 1 fila de ejemplo.
+
+**Auditoría:** cada import masivo escribe un registro en `auditoria_cambios` con `accion='CARGA_MASIVA'`, además de los registros individuales que cada modelo genera vía el trait `Auditable`. El registro de batch incluye nombre de archivo, total procesado, total insertado, total con errores y la lista de cédulas creadas.
+
+#### Pacientes (flujo completo)
+
+Permiso requerido: `pacientes.crear`.
 
 #### `GET /api/pacientes/plantilla-excel`
 Descarga `plantilla_pacientes.xlsx`. Trae dos hojas:
@@ -280,6 +294,67 @@ const { data } = await axios.post('/api/pacientes/importar-excel', fd, {
 });
 console.log(data.data.total_insertadas, data.data.errores);
 ```
+
+#### Catálogo y plantillas ejemplo
+
+##### `GET /api/cargas-masivas`
+Lista los tipos de carga masiva disponibles. Diseñado para que el frontend renderice la pantalla "Cargas masivas" sin hardcodear nada.
+
+**Response 200:**
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "key": "pacientes",
+      "nombre": "Pacientes",
+      "descripcion": "Carga masiva de pacientes en la tabla `pacientes`. Tope 500 filas.",
+      "plantilla_url": "/api/pacientes/plantilla-excel",
+      "import_url": "/api/pacientes/importar-excel",
+      "disponible": true,
+      "permiso": "pacientes.crear",
+      "tope_filas": 500
+    },
+    {
+      "key": "citas",
+      "nombre": "Citas (ejemplo, no implementado)",
+      "descripcion": "Plantilla ejemplo para futura carga masiva de citas. Solo descarga; el import aún no está disponible.",
+      "plantilla_url": "/api/cargas-masivas/citas/plantilla",
+      "import_url": null,
+      "disponible": false,
+      "permiso": "pacientes.crear",
+      "tope_filas": null
+    },
+    {
+      "key": "usuarios",
+      "nombre": "Usuarios (ejemplo, no implementado)",
+      "descripcion": "Plantilla ejemplo para futura carga masiva de personal/médicos. Solo descarga; el import aún no está disponible.",
+      "plantilla_url": "/api/cargas-masivas/usuarios/plantilla",
+      "import_url": null,
+      "disponible": false,
+      "permiso": "usuarios.crear",
+      "tope_filas": null
+    }
+  ]
+}
+```
+
+##### `GET /api/cargas-masivas/citas/plantilla`
+Descarga `plantilla_citas.xlsx` con columnas: `paciente_id`, `medico_id`, `especialidad_id`, `programada_para` (formato `YYYY-MM-DD HH:MM:SS`).
+
+##### `GET /api/cargas-masivas/usuarios/plantilla`
+Descarga `plantilla_usuarios.xlsx` con columnas: `nombre`, `correo`, `rol_id`, `especialidad_id`, `esta_activo`.
+> El `password` **no** va en la plantilla por seguridad. Cuando se implemente el import, se generará un temporal y se forzará reset al primer login.
+
+#### Cómo añadir una nueva carga masiva (guía rápida)
+
+1. Crear `app/Exports/PlantillaXxxxExport.php` (sigue el patrón de `PlantillaCitasExport`).
+2. Crear `app/Imports/XxxxImport.php` con las reglas reusando el `FormRequest` existente del create individual.
+3. Crear `XxxxImportController` con `plantilla()` + `import()`. Reusa el patrón de `PacienteImportController`.
+4. Registrar las dos rutas en `routes/api.php` **antes** de cualquier ruta con `{xxxx}` parametrizada.
+5. Añadir la entrada al array de `CargasMasivasController::index()` con `disponible: true`.
+6. Añadir registro de auditoría con `accion: AccionAuditoria::CARGA_MASIVA` y `nombre_tabla` = la tabla destino.
+7. Documentar en este README y agregar tests en `tests/Feature/`.
 
 ---
 
@@ -441,6 +516,8 @@ Todos requieren autenticación. Los modelos correspondientes auditan create/upda
 | `GET` | `/api/auditoria`         | 🔒 (Admin) |
 
 `GET /api/auditoria` devuelve el registro **append-only** de cambios del sistema. Cada entrada incluye `usuario_id`, `accion`, `nombre_tabla`, `registro_id`, `ip`, `user_agent` y `created_at`. **Cualquier intento de UPDATE/DELETE sobre `auditoria_cambios` lanza excepción** (Ley 2015).
+
+**Acciones registradas** (`accion`): `CREAR`, `EDITAR`, `ELIMINAR`, `RESTAURAR`, `CONSULTAR`, `CARGA_MASIVA`. Las cargas masivas escriben **un registro de batch** (con `registro_id=0` y un resumen JSON en `detalles`) **además** de los registros individuales por cada fila insertada — útil para auditar quién subió qué archivo, cuándo y cuántas filas resultaron en error.
 
 ---
 

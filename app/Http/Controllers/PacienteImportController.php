@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\AccionAuditoria;
 use App\Exports\PlantillaPacientesExport;
 use App\Http\Requests\ImportPacientesRequest;
 use App\Imports\PacientesImport;
+use App\Models\AuditoriaCambio;
 use App\Services\Contracts\PacienteServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -73,6 +76,31 @@ class PacienteImportController extends Controller
         Excel::import($import, $archivo);
 
         $excedioLimite = $import->totalFilas >= PacientesImport::LIMITE_FILAS;
+
+        // Bitácora del lote (Ley 2015): un único registro de auditoría por
+        // batch resumiendo qué se importó, además de los registros individuales
+        // que ya genera el trait Auditable de Paciente por cada fila insertada.
+        AuditoriaCambio::create([
+            'usuario_id' => Auth::id(),
+            'accion' => AccionAuditoria::CARGA_MASIVA->value,
+            'nombre_tabla' => 'pacientes',
+            'registro_id' => 0, // 0 = batch (no aplica a un solo registro)
+            'detalles' => json_encode([
+                'tipo_carga' => 'pacientes',
+                'archivo' => $archivo->getClientOriginalName(),
+                'tamano_bytes' => $archivo->getSize(),
+                'total_filas_procesadas' => $import->totalFilas,
+                'total_insertadas' => count($import->insertadas),
+                'total_errores' => count($import->errores),
+                'excedio_limite' => $excedioLimite,
+                'cedulas_insertadas' => array_map(
+                    static fn (array $row): ?string => $row['cedula'] ?? null,
+                    $import->insertadas,
+                ),
+            ], JSON_UNESCAPED_UNICODE),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         return response()->json([
             'status' => 'success',

@@ -11,4 +11,5 @@ enum AccionAuditoria: string
     case ELIMINAR = 'ELIMINAR';
     case RESTAURAR = 'RESTAURAR';
     case CONSULTAR = 'CONSULTAR';
+    case CARGA_MASIVA = 'CARGA_MASIVA';
 }
