@@ -133,11 +133,13 @@ Flujo de 3 pasos. Código alfanumérico de **8 caracteres**, válido por **5 min
 
 | Método | Ruta | Auth | Permiso |
 |--------|------|------|---------|
-| `GET`    | `/api/pacientes`                   | 🔒 | — |
-| `POST`   | `/api/pacientes`                   | 🔒 | `pacientes.crear` |
-| `GET`    | `/api/pacientes/{paciente}`        | 🔒 | — |
-| `DELETE` | `/api/pacientes/{paciente}`        | 🔒 | — (soft delete) |
-| `GET`    | `/api/pacientes/{id}/exportar-historia` | 🔒 | — (PDF) |
+| `GET`    | `/api/pacientes`                            | 🔒 | — |
+| `POST`   | `/api/pacientes`                            | 🔒 | `pacientes.crear` |
+| `GET`    | `/api/pacientes/{paciente}`                 | 🔒 | — |
+| `DELETE` | `/api/pacientes/{paciente}`                 | 🔒 | — (soft delete) |
+| `GET`    | `/api/pacientes/{id}/exportar-historia`     | 🔒 | — (PDF) |
+| `GET`    | `/api/pacientes/plantilla-excel`            | 🔒 | `pacientes.crear` |
+| `POST`   | `/api/pacientes/importar-excel`             | 🔒 | `pacientes.crear` |
 
 ### `POST /api/pacientes`
 Crea paciente y, opcionalmente, su Historia Clínica de Ingreso en una transacción atómica.
@@ -180,6 +182,104 @@ Crea paciente y, opcionalmente, su Historia Clínica de Ingreso en una transacci
 - `cedula` única (ignorando soft-deleted).
 - `fecha_nacimiento` no puede ser posterior a hoy.
 - Bloque `ingreso` es opcional.
+
+### 📥 Carga masiva por Excel
+
+Flujo de dos pasos para que un coordinador cargue muchos pacientes de una vez. Permiso requerido: `pacientes.crear`.
+
+#### `GET /api/pacientes/plantilla-excel`
+Descarga `plantilla_pacientes.xlsx`. Trae dos hojas:
+
+- **Pacientes** — encabezados oficiales + una fila de ejemplo.
+- **Catálogos** — valores válidos para `tipo_documento` (CC, TI, CE, RC, PA, PE) y `sexo` (M, F).
+
+> En el frontend usar `responseType: 'blob'` (axios) o `fetch().blob()` y disparar la descarga con un `<a download>`.
+
+#### `POST /api/pacientes/importar-excel`
+**Content-Type:** `multipart/form-data`
+**Campo:** `archivo` (xlsx/xls, máx. 5 MB)
+
+**Reglas:**
+- **Tope:** 500 filas por archivo (las adicionales se ignoran y `data.excedio_limite = true`).
+- **Best-effort:** las filas válidas se insertan; las inválidas se devuelven con detalle.
+- Cada paciente se crea en su propia transacción → un fallo no aborta el lote.
+- Reusa exactamente las mismas reglas de `POST /api/pacientes` (cédula única, enums, fecha ≤ hoy, etc.).
+- **Filas vacías** se ignoran (no cuentan como error).
+
+**Códigos de respuesta:**
+| Código | Cuándo |
+|--------|--------|
+| `201` | Todas las filas insertadas, cero errores |
+| `207` | Éxito parcial — hubo filas válidas e inválidas |
+| `403` | Falta permiso `pacientes.crear` |
+| `422` | El archivo no es xlsx/xls válido o pesa más de 5 MB |
+
+**Response 207 (ejemplo):**
+```json
+{
+  "status": "success",
+  "message": "2 pacientes importados, 1 con errores.",
+  "data": {
+    "total_filas_procesadas": 3,
+    "total_insertadas": 2,
+    "insertadas": [
+      { "fila": 2, "cedula": "1000000001" },
+      { "fila": 3, "cedula": "1000000002" }
+    ],
+    "total_errores": 1,
+    "errores": [
+      {
+        "fila": 4,
+        "cedula": "1000000001",
+        "errores": {
+          "cedula": ["Ya existe un paciente registrado con este número de documento."]
+        }
+      }
+    ],
+    "limite_filas": 500,
+    "excedio_limite": false
+  }
+}
+```
+
+**Cómo probar manualmente (curl):**
+```bash
+# 1) Descarga la plantilla
+curl -H "Authorization: Bearer $TOKEN" \
+  http://127.0.0.1:8000/api/pacientes/plantilla-excel \
+  -o plantilla_pacientes.xlsx
+
+# 2) Llena la hoja "Pacientes" con tus filas y súbela
+curl -X POST http://127.0.0.1:8000/api/pacientes/importar-excel \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept: application/json" \
+  -F "archivo=@plantilla_pacientes.xlsx"
+```
+
+**Cómo probar desde Scalar (`/docs`):**
+1. Login → copia el token en el candado superior.
+2. Endpoint **GET `/api/pacientes/plantilla-excel`** → "Try It" → descarga el xlsx.
+3. Llénalo localmente (respeta los enums de la hoja "Catálogos").
+4. Endpoint **POST `/api/pacientes/importar-excel`** → en el body multipart, selecciona el archivo en el campo `archivo` → "Send".
+
+**Cómo consumirlo desde el frontend (axios):**
+```js
+// Descargar plantilla
+const blob = await axios.get('/api/pacientes/plantilla-excel', {
+  responseType: 'blob',
+  headers: { Authorization: `Bearer ${token}` },
+});
+const url = URL.createObjectURL(blob.data);
+Object.assign(document.createElement('a'), { href: url, download: 'plantilla_pacientes.xlsx' }).click();
+
+// Importar Excel
+const fd = new FormData();
+fd.append('archivo', file); // file = input[type=file].files[0]
+const { data } = await axios.post('/api/pacientes/importar-excel', fd, {
+  headers: { Authorization: `Bearer ${token}` }, // NO seteen Content-Type, axios lo arma con boundary
+});
+console.log(data.data.total_insertadas, data.data.errores);
+```
 
 ---
 
@@ -409,6 +509,13 @@ curl -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8000/api/pacientes
 curl -X POST http://127.0.0.1:8000/api/objetivos \
   -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
   -d '{"nombre":"Test","descripcion":"Probando"}'
+
+# Carga masiva: descargar plantilla y subirla rellena
+curl -H "Authorization: Bearer $TOKEN" \
+  http://127.0.0.1:8000/api/pacientes/plantilla-excel -o plantilla_pacientes.xlsx
+curl -X POST http://127.0.0.1:8000/api/pacientes/importar-excel \
+  -H "Authorization: Bearer $TOKEN" -H "Accept: application/json" \
+  -F "archivo=@plantilla_pacientes.xlsx"
 ```
 
 ---

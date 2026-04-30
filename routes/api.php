@@ -14,6 +14,7 @@ use App\Http\Controllers\HistoriaClinicaIngresoController;
 use App\Http\Controllers\ObjetivoController;
 use App\Http\Controllers\OrdenMedicaController;
 use App\Http\Controllers\PacienteController;
+use App\Http\Controllers\PacienteImportController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\RespuestaController;
@@ -58,6 +59,10 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/medicos', [UserController::class, 'medicos']);
 
     // --- Pacientes ---
+    // Carga masiva (deben ir ANTES del show con {paciente} para evitar conflicto de ruta).
+    Route::get('/pacientes/plantilla-excel', [PacienteImportController::class, 'plantilla']);
+    Route::post('/pacientes/importar-excel', [PacienteImportController::class, 'import']);
+
     Route::get('/pacientes', [PacienteController::class, 'index']);
     Route::post('/pacientes', [PacienteController::class, 'store']);
     Route::get('/pacientes/{paciente}', [PacienteController::class, 'show']);
