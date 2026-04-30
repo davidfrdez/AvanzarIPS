@@ -24,19 +24,6 @@ El equipo de frontend (React) reportó que su UI ya está construida y necesita 
 
 ---
 
-## 🧩 Tareas derivadas de Mocks en el Frontend
-
-Tras un análisis del código fuente en React, se identificaron los siguientes datos quemados (`mocks`) que requieren endpoints específicos o ajustes en el backend para poder ser reemplazados por datos reales:
-
-| Archivo Frontend | Mock Actual | Requisito Backend para Integración |
-| --- | --- | --- |
-| `UsersManagement.tsx` | `MOCK_USERS` | Asegurar que `GET /api/usuarios` (ya existente) retorne la data estructurada incluyendo `rol_id` (o nombre del rol) y estado `activo` para poblar la tabla de administración. |
-| `ActivitiesManager.tsx` y `ClinicalManagement.tsx` | `// Mocks for now` y `mockObjectives` | **FE-2 (M2)** - Requiere CRUD completo de Objetivos, Actividades y Respuestas (`POST/PUT/DELETE /api/objetivos`, etc.) para gestionar el árbol clínico. |
-| `AuditLogs.tsx` | `mockLogs` | **Nuevo:** Endpoint `GET /api/auditoria` que retorne el historial de la tabla `auditoria_cambios` (relacionando el `user` para mostrar quién hizo qué, fecha, acción y detalles). |
-| `ReportsPage.tsx` | `MOCK_PATIENTS` | **Nuevo:** Endpoint analítico tipo `GET /api/reportes/progreso-terapias` que retorne los pacientes con campos calculados: total de terapias realizadas en el mes (`horasMes`) vs meta u objetivo (`horasObjetivo`). |
-
----
-
 ## Inventario de hallazgos (resumen)
 
 **Patrón positivo a replicar:** la cadena `StorePacienteRequest → PacienteDTO → PacienteServiceInterface → PacienteService → (pendiente) PacienteResource` ya cumple la arquitectura exigida (strict_types, return types, DTOs readonly, transacciones, interfaces). Es la referencia para todos los demás módulos.
