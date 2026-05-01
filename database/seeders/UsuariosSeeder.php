@@ -31,6 +31,26 @@ class UsuariosSeeder extends Seeder
                     'esta_activo' => true,
                 ]
             );
+            User::updateOrCreate(
+                ['correo' => 'admin@gmail.com'],
+                [
+                    'nombre' => 'Admin',
+                    'rol_id' => $rolAdmin->id,
+                    'especialidad_id' => $espSinEspecificar?->id,
+                    'password' => Hash::make('admin1234'),
+                    'esta_activo' => true,
+                ]
+            );
+            User::updateOrCreate(
+                ['correo' => 'contacto@dalioss.com'],
+                [
+                    'nombre' => 'dalioss',
+                    'rol_id' => $rolAdmin->id,
+                    'especialidad_id' => $espSinEspecificar?->id,
+                    'password' => Hash::make('dalioss1234'),
+                    'esta_activo' => true,
+                ]
+            );
         }
 
         if ($rolMedico) {

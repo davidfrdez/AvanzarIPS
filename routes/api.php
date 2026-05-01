@@ -5,15 +5,18 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\ActividadController;
 use App\Http\Controllers\AuditoriaController;
+use App\Http\Controllers\CargasMasivasController;
 use App\Http\Controllers\CitaController;
 use App\Http\Controllers\ConsentimientoLegalController;
 use App\Http\Controllers\ConsultaEspecialistaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EscalaWeefimController;
+use App\Http\Controllers\EspecialidadController;
 use App\Http\Controllers\HistoriaClinicaIngresoController;
 use App\Http\Controllers\ObjetivoController;
 use App\Http\Controllers\OrdenMedicaController;
 use App\Http\Controllers\PacienteController;
+use App\Http\Controllers\PacienteImportController;
 use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\PdfController;
 use App\Http\Controllers\RespuestaController;
@@ -58,13 +61,25 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/medicos', [UserController::class, 'medicos']);
 
     // --- Pacientes ---
+    // Carga masiva (deben ir ANTES del show con {paciente} para evitar conflicto de ruta).
+    Route::get('/pacientes/plantilla-excel', [PacienteImportController::class, 'plantilla']);
+    Route::post('/pacientes/importar-excel', [PacienteImportController::class, 'import']);
+
     Route::get('/pacientes', [PacienteController::class, 'index']);
     Route::post('/pacientes', [PacienteController::class, 'store']);
     Route::get('/pacientes/{paciente}', [PacienteController::class, 'show']);
     Route::delete('/pacientes/{paciente}', [PacienteController::class, 'destroy']);
 
     // --- Citas ---
+    Route::get('/citas', [CitaController::class, 'index']);
     Route::post('/citas', [CitaController::class, 'store']);
+    Route::post('/citas/batch', [CitaController::class, 'storeBatch']);
+
+    // --- Especialidades (CRUD admin) ---
+    Route::post('/especialidades', [EspecialidadController::class, 'store']);
+    Route::get('/especialidades/{especialidad}', [EspecialidadController::class, 'show']);
+    Route::put('/especialidades/{especialidad}', [EspecialidadController::class, 'update']);
+    Route::delete('/especialidades/{especialidad}', [EspecialidadController::class, 'destroy']);
 
     // --- Árbol Clínico (FE-2 — M2) ---
     Route::apiResource('objetivos', ObjetivoController::class);
@@ -91,4 +106,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
 
     // --- Exportación ---
     Route::get('/pacientes/{id}/exportar-historia', [PdfController::class, 'descargarHistoria']);
+
+    // --- Cargas masivas (catálogo + plantillas ejemplo) ---
+    Route::get('/cargas-masivas', [CargasMasivasController::class, 'index']);
+    Route::get('/cargas-masivas/citas/plantilla', [CargasMasivasController::class, 'plantillaCitas']);
+    Route::get('/cargas-masivas/usuarios/plantilla', [CargasMasivasController::class, 'plantillaUsuarios']);
 });

@@ -27,8 +27,9 @@ class PermisoRolSeeder extends Seeder
                 'usuarios.crear', 
                 'usuarios.editar', 
                 'roles.gestionar',
-                'objetivos.gestionar', 
-                'auditoria.ver', 
+                'objetivos.gestionar',
+                'especialidades.gestionar',
+                'auditoria.ver',
                 'pacientes.carga_masiva', 
                 'usuarios.reset_password'
             ],

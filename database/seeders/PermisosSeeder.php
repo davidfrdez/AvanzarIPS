@@ -21,6 +21,7 @@ class PermisosSeeder extends Seeder
             ['nombre' => 'Editar Usuarios', 'vista' => 'usuarios.editar', 'descripcion' => 'Editar y desactivar usuarios'],
             ['nombre' => 'Gestionar Roles', 'vista' => 'roles.gestionar', 'descripcion' => 'Crear y editar roles y permisos'],
             ['nombre' => 'Gestionar Objetivos', 'vista' => 'objetivos.gestionar', 'descripcion' => 'Crear y editar objetivos, actividades y respuestas'],
+            ['nombre' => 'Gestionar Especialidades', 'vista' => 'especialidades.gestionar', 'descripcion' => 'Crear, editar y eliminar especialidades clinicas'],
             ['nombre' => 'Ver Auditoría', 'vista' => 'auditoria.ver', 'descripcion' => 'Acceso a los logs de cambios del sistema'],
             ['nombre' => 'Carga Masiva', 'vista' => 'pacientes.carga_masiva', 'descripcion' => 'Importar pacientes desde CSV/Excel'],
             ['nombre' => 'Reset Password', 'vista' => 'usuarios.reset_password', 'descripcion' => 'Forzar reseteo de contraseñas de otros usuarios'],

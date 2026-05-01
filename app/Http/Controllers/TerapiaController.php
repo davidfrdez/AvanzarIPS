@@ -31,22 +31,15 @@ class TerapiaController extends Controller
             'actividad_id' => 'required|integer|exists:actividades,id',
             'especialidad_id' => 'required|integer|exists:especialidades,id',
             'firma_electronica' => 'required|string',
+            'fecha_hora' => 'nullable|date',
             'resultados' => 'required|array',
             'resultados.*.respuesta_id' => 'required|integer|exists:respuestas,id',
             'resultados.*.marcado' => 'required|boolean',
             'resultados.*.notas_libres' => 'nullable|string',
         ]);
 
-        $existe = Terapia::where('paciente_id', $validated['paciente_id'])
-            ->whereDate('fecha_hora', now()->toDateString())
-            ->exists();
-
-        if ($existe) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Ya existe una terapia para este paciente hoy.',
-            ], 422);
-        }
+        // Se permiten varias terapias por paciente el mismo dia
+        // (formato F-GDG-020 admite multiples sesiones por dia y especialidad).
 
         $terapia = DB::transaction(function () use ($validated, $user): Terapia {
             // Cast 'encrypted' del modelo se encarga de cifrar — no usar encrypt() manual.
@@ -57,7 +50,7 @@ class TerapiaController extends Controller
                 'actividad_id' => $validated['actividad_id'],
                 'especialidad_id' => $validated['especialidad_id'],
                 'firma_electronica' => $validated['firma_electronica'],
-                'fecha_hora' => now(),
+                'fecha_hora' => $validated['fecha_hora'] ?? now(),
             ]);
 
             foreach ($validated['resultados'] as $resultado) {
