@@ -11,6 +11,7 @@ use App\Http\Controllers\ConsentimientoLegalController;
 use App\Http\Controllers\ConsultaEspecialistaController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EscalaWeefimController;
+use App\Http\Controllers\EspecialidadController;
 use App\Http\Controllers\HistoriaClinicaIngresoController;
 use App\Http\Controllers\ObjetivoController;
 use App\Http\Controllers\OrdenMedicaController;
@@ -70,7 +71,15 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('/pacientes/{paciente}', [PacienteController::class, 'destroy']);
 
     // --- Citas ---
+    Route::get('/citas', [CitaController::class, 'index']);
     Route::post('/citas', [CitaController::class, 'store']);
+    Route::post('/citas/batch', [CitaController::class, 'storeBatch']);
+
+    // --- Especialidades (CRUD admin) ---
+    Route::post('/especialidades', [EspecialidadController::class, 'store']);
+    Route::get('/especialidades/{especialidad}', [EspecialidadController::class, 'show']);
+    Route::put('/especialidades/{especialidad}', [EspecialidadController::class, 'update']);
+    Route::delete('/especialidades/{especialidad}', [EspecialidadController::class, 'destroy']);
 
     // --- Árbol Clínico (FE-2 — M2) ---
     Route::apiResource('objetivos', ObjetivoController::class);

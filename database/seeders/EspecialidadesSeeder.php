@@ -27,8 +27,16 @@ class EspecialidadesSeeder extends Seeder
                 'nombre' => 'Fonoaudiología'
             ],
             [
-                'id' => 4, 
+                'id' => 4,
                 'nombre' => 'Terapia Ocupacional'
+            ],
+            [
+                'id' => 5,
+                'nombre' => 'Psicologia'
+            ],
+            [
+                'id' => 6,
+                'nombre' => 'Visioterapia'
             ],
         ];
 
