@@ -98,6 +98,10 @@ Flujo de 3 pasos. Código alfanumérico de **8 caracteres**, válido por **5 min
 |--------|------|------|-------------------|
 | `GET`    | `/api/roles`                       | Pública | — |
 | `GET`    | `/api/especialidades`              | Pública | — |
+| `POST`   | `/api/especialidades`              | 🔒 | `especialidades.gestionar` |
+| `GET`    | `/api/especialidades/{id}`         | 🔒 | — |
+| `PUT`    | `/api/especialidades/{id}`         | 🔒 | `especialidades.gestionar` |
+| `DELETE` | `/api/especialidades/{id}`         | 🔒 | `especialidades.gestionar` |
 | `GET`    | `/api/usuarios`                    | 🔒 | `usuarios.ver` |
 | `POST`   | `/api/usuarios`                    | 🔒 | `usuarios.crear` |
 | `GET`    | `/api/usuarios/{user}`             | 🔒 | `usuarios.ver` |
@@ -360,11 +364,13 @@ Descarga `plantilla_usuarios.xlsx` con columnas: `nombre`, `correo`, `rol_id`, `
 
 ## 📅 Citas
 
-| Método | Ruta | Auth |
-|--------|------|------|
-| `POST` | `/api/citas` | 🔒 |
+| Método | Ruta | Auth | Descripción |
+|--------|------|------|-------------|
+| `GET`  | `/api/citas`        | 🔒 | Listado con filtros opcionales: `paciente_id`, `medico_id`, `desde`, `hasta`. |
+| `POST` | `/api/citas`        | 🔒 | Crea una cita. Valida que el profesional **no tenga** otra cita en el mismo `programada_para` (responde 422 si hay colisión). |
+| `POST` | `/api/citas/batch`  | 🔒 | Agenda **varias terapias/citas** del mismo paciente en un solo request. |
 
-**Body:**
+**Body `POST /api/citas`:**
 ```json
 {
   "paciente_id": 1,
@@ -373,6 +379,19 @@ Descarga `plantilla_usuarios.xlsx` con columnas: `nombre`, `correo`, `rol_id`, `
   "programada_para": "2026-05-20 10:00:00"
 }
 ```
+
+**Body `POST /api/citas/batch` (agendar varias terapias del paciente):**
+```json
+{
+  "paciente_id": 1,
+  "citas": [
+    { "medico_id": 2, "especialidad_id": 2, "programada_para": "2026-05-20 09:00:00" },
+    { "medico_id": 3, "especialidad_id": 3, "programada_para": "2026-05-20 10:00:00" },
+    { "medico_id": 4, "especialidad_id": 4, "programada_para": "2026-05-20 11:00:00" }
+  ]
+}
+```
+Devuelve `{creadas, errores, data}` — best-effort: las que tienen colisión se reportan en `errores`, las demás se crean.
 
 ---
 
@@ -439,7 +458,7 @@ CRUD completo del árbol jerárquico para el componente `ActivitiesManager` del 
 | `GET`  | `/api/terapias` | 🔒 | — |
 | `POST` | `/api/terapias` | 🔒 | `terapias.registrar` |
 
-`POST` registra una evolución clínica. **Bloquea duplicados del mismo paciente en el mismo día**. La firma se cifra con AES-256 vía cast `encrypted` (no exponer en respuestas).
+`POST` registra una evolución clínica. Se permiten **varias terapias por paciente el mismo día y especialidad** (formato F-GDG-020 admite múltiples sesiones diarias). Acepta `fecha_hora` opcional para registros retroactivos. La firma se cifra con AES-256 vía cast `encrypted` (no exponer en respuestas).
 
 ```json
 {
@@ -448,6 +467,7 @@ CRUD completo del árbol jerárquico para el componente `ActivitiesManager` del 
   "actividad_id": 1,
   "especialidad_id": 2,
   "firma_electronica": "Firma del Dr. Daniel",
+  "fecha_hora": "2026-04-20 14:00:00",
   "resultados": [
     { "respuesta_id": 1, "marcado": true, "notas_libres": "Mejora notable" }
   ]
@@ -527,7 +547,11 @@ Todos requieren autenticación. Los modelos correspondientes auditan create/upda
 |--------|------|------|
 | `GET` | `/api/pacientes/{id}/exportar-historia` | 🔒 |
 
-Descarga el PDF consolidado de la historia clínica del paciente.
+Descarga el PDF consolidado siguiendo el **formato oficial F-GDG-020 EVOLUCIÓN DE PACIENTE** de Avanzar IPS:
+- Encabezado con logo, código `F-GDG-020`, "Documento Controlado".
+- Sección **Recepción**: Nombre, Identificación, EPS, Edad, Sexo (M/F en cajitas) y Diagnóstico.
+- Tabla de evoluciones: `Fecha | Hora | Área | Atención, Actividad y/o Procedimiento`, con firma del profesional bajo cada registro (Nombre, Correo, Especialidad, AVANZAR IPS).
+- El campo **Área** se abrevia automáticamente desde la especialidad: `PSICO`, `FONO`, `FISIO`, `T.O.`, `VISIO`.
 
 ---
 
@@ -535,7 +559,7 @@ Descarga el PDF consolidado de la historia clínica del paciente.
 
 | Rol | Permisos |
 |-----|----------|
-| **Administrador** | (todos, super-rol) |
+| **Administrador** | (todos, super-rol) — incluye `usuarios.*`, `roles.gestionar`, `objetivos.gestionar`, **`especialidades.gestionar`**, `auditoria.ver`, `pacientes.carga_masiva`, `usuarios.reset_password` |
 | **Coordinador** | `dashboards.ver`, `historial.ver`, `pdf.aprobar`, `pdf.masivo`, `datos.exportar` |
 | **Medico** | `agenda.ver`, `pacientes.buscar`, `pacientes.crear`, `terapias.registrar`, `terapias.firmar`, `terapias.notas_libres` |
 
@@ -553,7 +577,7 @@ Ver `database/seeders/PermisosSeeder.php` y `PermisoRolSeeder.php` para el catá
 | `403`  | Token válido pero sin permiso (RBAC) |
 | `404`  | Recurso no encontrado |
 | `409`  | Conflicto (ej. eliminar nodo del árbol con hijos) |
-| `422`  | Validación fallida / error de negocio (ej. terapia duplicada el mismo día) |
+| `422`  | Validación fallida / error de negocio (ej. cita con colisión de horario del profesional) |
 | `429`  | Rate limit excedido (login y password reset) |
 
 ---
@@ -599,3 +623,16 @@ curl -X POST http://127.0.0.1:8000/api/pacientes/importar-excel \
 
 ## 📌 Roadmap pendiente
 Ver [ReadmeTareas.md](ReadmeTareas.md) para los items priorizados restantes (M3 PDFs masivos, M9 carga masiva, M10 reportes ZIP, etc.).
+
+---
+
+## 🆕 Changelog reciente (Preproduccion)
+
+**Sprint actual — Especialidades, terapias múltiples y formato F-GDG-020**
+
+- ✅ **Especialidades CRUD admin** — nuevo `EspecialidadController` + permiso `especialidades.gestionar`. Endpoints: `POST/GET/PUT/DELETE /api/especialidades/{id}`. El borrado se bloquea con 409 si la especialidad tiene profesionales o citas asociadas.
+- ✅ **Múltiples terapias por paciente/día** — se removió el bloqueo `"Ya existe una terapia para este paciente hoy"` en `TerapiaController@store`. El formato F-GDG-020 admite varias sesiones diarias (psicología, fonoaudiología, fisio, T.O. en distintas horas). Se acepta `fecha_hora` opcional para registros retroactivos.
+- ✅ **Citas mejoradas** — `GET /api/citas` con filtros, validación de colisión médico+hora (422), y `POST /api/citas/batch` para agendar varias terapias del paciente en un solo request.
+- ✅ **PDF rediseñado** — `resources/views/pdf/historia_clinica.blade.php` ahora replica el formato oficial **F-GDG-020 EVOLUCIÓN DE PACIENTE** (Recepción + tabla Fecha/Hora/Área/Atención con firma por evolución).
+- ✅ **Especialidades nuevas en seeder** — `Psicologia` y `Visioterapia` (además de Fisioterapia, Fonoaudiología y Terapia Ocupacional).
+- ✅ **Documentación API** — la UI Scalar (`/docs`) refleja automáticamente los nuevos endpoints (auto-detectados por Scramble desde rutas + FormRequests + Resources).
