@@ -56,14 +56,22 @@ class PacienteController extends Controller
             ->setStatusCode(201);
     }
 
-    public function destroy(Paciente $paciente): JsonResponse
+    /**
+     * Desactivar un paciente (no se elimina).
+     *
+     * Por integridad clínica los pacientes nunca se borran; se marcan como
+     * inactivos (`esta_activo = false`). Equivalente a PUT /alta.
+     * Requiere permiso `pacientes.gestionar`.
+     */
+    public function destroy(Request $request, Paciente $paciente): PacienteResource
     {
-        $this->pacienteService->softDelete($paciente);
+        if (! $request->user()?->tienePermiso('pacientes.gestionar')) {
+            abort(403, 'No tienes permiso para desactivar pacientes.');
+        }
 
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Paciente eliminado (soft delete) correctamente.',
-        ]);
+        return new PacienteResource(
+            $this->pacienteService->darAlta($paciente)
+        );
     }
 
     /**

@@ -143,7 +143,7 @@ Flujo de 3 pasos. Código alfanumérico de **8 caracteres**, válido por **5 min
 | `GET`    | `/api/pacientes/{paciente}/balance-horas`   | 🔒 | — (`?mes=YYYY-MM`) |
 | `PUT`    | `/api/pacientes/{paciente}/alta`            | 🔒 | `pacientes.gestionar` — dar de alta (baja clínica) |
 | `PUT`    | `/api/pacientes/{paciente}/reactivar`       | 🔒 | `pacientes.gestionar` — reactivar |
-| `DELETE` | `/api/pacientes/{paciente}`                 | 🔒 | — (soft delete permanente) |
+| `DELETE` | `/api/pacientes/{paciente}`                 | 🔒 | `pacientes.gestionar` — desactiva (nunca borra) |
 | `GET`    | `/api/pacientes/{id}/exportar-historia`     | 🔒 | — (PDF) |
 | `GET`    | `/api/pacientes/plantilla-excel`            | 🔒 | `pacientes.crear` |
 | `POST`   | `/api/pacientes/importar-excel`             | 🔒 | `pacientes.crear` |
@@ -225,7 +225,7 @@ curl http://127.0.0.1:8000/api/pacientes/5/balance-horas?mes=2026-05 \
 
 ### Alta y reactivación de pacientes
 
-> **Alta clínica ≠ eliminación.** Un paciente "dado de alta" (`esta_activo = false`) sigue siendo visible, sus registros clínicos son consultables y el historial PDF puede descargarse. La eliminación permanente usa `DELETE /pacientes/{id}`.
+> **Los pacientes nunca se eliminan.** Por integridad clínica, tanto `DELETE /pacientes/{id}` como `PUT /pacientes/{id}/alta` simplemente marcan `esta_activo = false`. El historial clínico completo queda siempre consultable y el PDF descargable.
 
 #### `PUT /api/pacientes/{id}/alta` — Dar de alta (desactivar)
 Marca el paciente como inactivo. Úsalo cuando un paciente concluye su tratamiento o deja de asistir.

@@ -168,6 +168,23 @@ final class PacienteAltaTest extends TestCase
         $this->assertTrue($ids->contains($inactivo->id));
     }
 
+    /** DELETE desactiva el paciente en lugar de eliminarlo */
+    public function test_delete_desactiva_en_lugar_de_eliminar(): void
+    {
+        Sanctum::actingAs($this->admin);
+
+        $this->deleteJson("/api/pacientes/{$this->paciente->id}")
+            ->assertOk()
+            ->assertJsonPath('data.esta_activo', false);
+
+        // El registro sigue en la BD
+        $this->assertDatabaseHas('pacientes', [
+            'id'          => $this->paciente->id,
+            'esta_activo' => false,
+        ]);
+        $this->assertDatabaseCount('pacientes', 1);
+    }
+
     /** Sin permiso pacientes.gestionar → 403 */
     public function test_usuario_sin_permiso_recibe_403(): void
     {
@@ -185,6 +202,9 @@ final class PacienteAltaTest extends TestCase
             ->assertStatus(403);
 
         $this->putJson("/api/pacientes/{$this->paciente->id}/reactivar")
+            ->assertStatus(403);
+
+        $this->deleteJson("/api/pacientes/{$this->paciente->id}")
             ->assertStatus(403);
     }
 }
