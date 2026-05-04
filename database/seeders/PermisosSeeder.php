@@ -32,6 +32,7 @@ class PermisosSeeder extends Seeder
             ['nombre' => 'Ver Agenda', 'vista' => 'agenda.ver', 'descripcion' => 'Visualizar agenda diaria de citas'],
             ['nombre' => 'Buscar Pacientes', 'vista' => 'pacientes.buscar', 'descripcion' => 'Buscar pacientes en el CRM'],
             ['nombre' => 'Crear Pacientes', 'vista' => 'pacientes.crear', 'descripcion' => 'Registrar un nuevo paciente en caso de no existir'],
+            ['nombre' => 'Gestionar Pacientes', 'vista' => 'pacientes.gestionar', 'descripcion' => 'Dar de alta (desactivar) y reactivar pacientes'],
             ['nombre' => 'Registrar Terapia', 'vista' => 'terapias.registrar', 'descripcion' => 'Registrar objetivos, actividades y resultados'],
             ['nombre' => 'Firmar Terapia', 'vista' => 'terapias.firmar', 'descripcion' => 'Aplicar firma electrónica (encriptada) al registro'],
             ['nombre' => 'Notas Libres', 'vista' => 'terapias.notas_libres', 'descripcion' => 'Permiso especial para agregar textos fuera de los predeterminados'],

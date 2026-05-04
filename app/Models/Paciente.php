@@ -33,10 +33,12 @@ class Paciente extends Model
         'nombre_responsable',
         'telefono_responsable',
         'parentesco_responsable',
+        'esta_activo',
     ];
 
     protected $casts = [
         'fecha_nacimiento' => 'date',
+        'esta_activo'      => 'boolean',
     ];
 
     public function citas(): HasMany { return $this->hasMany(Cita::class); }

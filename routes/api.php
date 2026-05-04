@@ -68,6 +68,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('/pacientes', [PacienteController::class, 'index']);
     Route::post('/pacientes', [PacienteController::class, 'store']);
     Route::get('/pacientes/{paciente}', [PacienteController::class, 'show']);
+    Route::put('/pacientes/{paciente}/alta', [PacienteController::class, 'darAlta']);        // dar de alta (desactivar)
+    Route::put('/pacientes/{paciente}/reactivar', [PacienteController::class, 'reactivar']); // reactivar
     Route::delete('/pacientes/{paciente}', [PacienteController::class, 'destroy']);
 
     // --- Citas ---

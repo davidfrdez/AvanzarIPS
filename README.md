@@ -137,10 +137,12 @@ Flujo de 3 pasos. Código alfanumérico de **8 caracteres**, válido por **5 min
 
 | Método | Ruta | Auth | Permiso |
 |--------|------|------|---------|
-| `GET`    | `/api/pacientes`                            | 🔒 | — |
+| `GET`    | `/api/pacientes`                            | 🔒 | — (`?estado=activos\|inactivos\|todos`) |
 | `POST`   | `/api/pacientes`                            | 🔒 | `pacientes.crear` |
 | `GET`    | `/api/pacientes/{paciente}`                 | 🔒 | — |
-| `DELETE` | `/api/pacientes/{paciente}`                 | 🔒 | — (soft delete) |
+| `PUT`    | `/api/pacientes/{paciente}/alta`            | 🔒 | `pacientes.gestionar` — dar de alta (baja clínica) |
+| `PUT`    | `/api/pacientes/{paciente}/reactivar`       | 🔒 | `pacientes.gestionar` — reactivar |
+| `DELETE` | `/api/pacientes/{paciente}`                 | 🔒 | — (soft delete permanente) |
 | `GET`    | `/api/pacientes/{id}/exportar-historia`     | 🔒 | — (PDF) |
 | `GET`    | `/api/pacientes/plantilla-excel`            | 🔒 | `pacientes.crear` |
 | `POST`   | `/api/pacientes/importar-excel`             | 🔒 | `pacientes.crear` |
@@ -186,6 +188,56 @@ Crea paciente y, opcionalmente, su Historia Clínica de Ingreso en una transacci
 - `cedula` única (ignorando soft-deleted).
 - `fecha_nacimiento` no puede ser posterior a hoy.
 - Bloque `ingreso` es opcional.
+
+### Alta y reactivación de pacientes
+
+> **Alta clínica ≠ eliminación.** Un paciente "dado de alta" (`esta_activo = false`) sigue siendo visible, sus registros clínicos son consultables y el historial PDF puede descargarse. La eliminación permanente usa `DELETE /pacientes/{id}`.
+
+#### `PUT /api/pacientes/{id}/alta` — Dar de alta (desactivar)
+Marca el paciente como inactivo. Úsalo cuando un paciente concluye su tratamiento o deja de asistir.
+
+```bash
+curl -X PUT http://127.0.0.1:8000/api/pacientes/5/alta \
+  -H "Authorization: Bearer <token>"
+```
+
+**Respuesta 200:**
+```json
+{
+  "data": {
+    "id": 5,
+    "nombres": "Juan",
+    "esta_activo": false,
+    ...
+  }
+}
+```
+
+#### `PUT /api/pacientes/{id}/reactivar` — Reactivar
+Vuelve a marcar el paciente como activo (p. ej., retoma tratamiento tras una pausa larga).
+
+```bash
+curl -X PUT http://127.0.0.1:8000/api/pacientes/5/reactivar \
+  -H "Authorization: Bearer <token>"
+```
+
+#### `GET /api/pacientes?estado=` — Filtro de estado
+
+| Parámetro | Resultado |
+|-----------|-----------|
+| `?estado=activos` | Solo pacientes en tratamiento activo **(default)** |
+| `?estado=inactivos` | Solo pacientes dados de alta |
+| `?estado=todos` | Todos los pacientes sin filtrar |
+
+Ejemplo — listar dados de alta:
+```bash
+curl http://127.0.0.1:8000/api/pacientes?estado=inactivos \
+  -H "Authorization: Bearer <token>"
+```
+
+**Permiso requerido:** `pacientes.gestionar` (alta y reactivar). El listado no requiere permiso adicional.
+
+---
 
 ### 📥 Cargas masivas por Excel
 

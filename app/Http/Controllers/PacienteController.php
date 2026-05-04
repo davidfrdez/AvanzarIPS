@@ -9,6 +9,7 @@ use App\Http\Resources\PacienteResource;
 use App\Models\Paciente;
 use App\Services\Contracts\PacienteServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class PacienteController extends Controller
@@ -18,13 +19,18 @@ class PacienteController extends Controller
     ) {
     }
 
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
-        $perPage = (int) request()->integer('per_page', 25);
-        $perPage = max(1, min($perPage, 100));
+        $perPage = max(1, min((int) $request->integer('per_page', 25), 100));
+
+        // ?estado=activos (default) | inactivos | todos
+        $estado = $request->input('estado', 'activos');
+        if (! in_array($estado, ['activos', 'inactivos', 'todos'], true)) {
+            $estado = 'activos';
+        }
 
         return PacienteResource::collection(
-            $this->pacienteService->paginate($perPage)
+            $this->pacienteService->paginate($perPage, $estado)
         );
     }
 
@@ -55,5 +61,36 @@ class PacienteController extends Controller
             'status' => 'success',
             'message' => 'Paciente eliminado (soft delete) correctamente.',
         ]);
+    }
+
+    /**
+     * Da de alta (baja clínica) al paciente — esta_activo = false.
+     * El historial clínico permanece intacto y consultable.
+     * Requiere permiso `pacientes.gestionar`.
+     */
+    public function darAlta(Request $request, Paciente $paciente): PacienteResource
+    {
+        if (! $request->user()?->tienePermiso('pacientes.gestionar')) {
+            abort(403, 'No tienes permiso para dar de alta pacientes.');
+        }
+
+        return new PacienteResource(
+            $this->pacienteService->darAlta($paciente)
+        );
+    }
+
+    /**
+     * Reactiva un paciente previamente dado de alta — esta_activo = true.
+     * Requiere permiso `pacientes.gestionar`.
+     */
+    public function reactivar(Request $request, Paciente $paciente): PacienteResource
+    {
+        if (! $request->user()?->tienePermiso('pacientes.gestionar')) {
+            abort(403, 'No tienes permiso para reactivar pacientes.');
+        }
+
+        return new PacienteResource(
+            $this->pacienteService->reactivar($paciente)
+        );
     }
 }

@@ -35,6 +35,7 @@ class PacienteResource extends JsonResource
             'nombre_responsable' => $this->nombre_responsable,
             'telefono_responsable' => $this->telefono_responsable,
             'parentesco_responsable' => $this->parentesco_responsable,
+            'esta_activo' => (bool) $this->esta_activo,
             'created_at' => optional($this->created_at)->toIso8601String(),
             'updated_at' => optional($this->updated_at)->toIso8601String(),
             'historias_ingreso' => HistoriaClinicaIngresoResource::collection(

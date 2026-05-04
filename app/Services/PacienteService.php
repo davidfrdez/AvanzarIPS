@@ -50,16 +50,36 @@ final class PacienteService implements PacienteServiceInterface
         return (bool) $paciente->delete();
     }
 
+    public function darAlta(Paciente $paciente): Paciente
+    {
+        $paciente->update(['esta_activo' => false]);
+        return $paciente->refresh();
+    }
+
+    public function reactivar(Paciente $paciente): Paciente
+    {
+        $paciente->update(['esta_activo' => true]);
+        return $paciente->refresh();
+    }
+
     public function findByCedula(string $cedula): ?Paciente
     {
         return Paciente::query()->where('cedula', $cedula)->first();
     }
 
-    public function paginate(int $perPage = 25): LengthAwarePaginator
+    public function paginate(int $perPage = 25, string $estado = 'activos'): LengthAwarePaginator
     {
-        return Paciente::query()
+        $query = Paciente::query()
             ->orderBy('apellidos')
-            ->orderBy('nombres')
-            ->paginate($perPage);
+            ->orderBy('nombres');
+
+        if ($estado === 'activos') {
+            $query->where('esta_activo', true);
+        } elseif ($estado === 'inactivos') {
+            $query->where('esta_activo', false);
+        }
+        // 'todos' → sin filtro
+
+        return $query->paginate($perPage);
     }
 }
