@@ -36,6 +36,7 @@ class PermisosSeeder extends Seeder
             ['nombre' => 'Registrar Terapia', 'vista' => 'terapias.registrar', 'descripcion' => 'Registrar objetivos, actividades y resultados'],
             ['nombre' => 'Firmar Terapia', 'vista' => 'terapias.firmar', 'descripcion' => 'Aplicar firma electrónica (encriptada) al registro'],
             ['nombre' => 'Notas Libres', 'vista' => 'terapias.notas_libres', 'descripcion' => 'Permiso especial para agregar textos fuera de los predeterminados'],
+            ['nombre' => 'Registro Retroactivo', 'vista' => 'terapias.retroactivo', 'descripcion' => 'Registrar terapias con fecha anterior a hoy (corrección de olvidos). Solo admin/supervisor.'],
 
             // ----------------------------------------------------
             // Módulo 3: Supervisión y Reportería
