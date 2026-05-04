@@ -38,8 +38,23 @@ class TerapiaController extends Controller
             'resultados.*.notas_libres' => 'nullable|string',
         ]);
 
-        // Se permiten varias terapias por paciente el mismo dia
-        // (formato F-GDG-020 admite multiples sesiones por dia y especialidad).
+        // Se permiten varias terapias por paciente el mismo dia (F-GDG-020 admite
+        // multiples sesiones diarias por especialidad), pero NO en la misma franja
+        // horaria (hora en punto) para evitar registros duplicados accidentales.
+        $existe = Terapia::where('paciente_id', $validated['paciente_id'])
+            ->whereBetween('fecha_hora', [now()->startOfHour(), now()->endOfHour()])
+            ->exists();
+
+        if ($existe) {
+            return response()->json([
+                'status' => 'error',
+                'message' => sprintf(
+                    'Ya existe una terapia registrada para este paciente entre las %s y las %s.',
+                    now()->startOfHour()->format('H:i'),
+                    now()->endOfHour()->format('H:i')
+                ),
+            ], 422);
+        }
 
         $terapia = DB::transaction(function () use ($validated, $user): Terapia {
             // Cast 'encrypted' del modelo se encarga de cifrar — no usar encrypt() manual.
