@@ -66,8 +66,10 @@ class CitaController extends Controller
     }
 
     /**
-     * Agendar varias terapias/citas para un mismo paciente en un solo request.
-     * Body: { paciente_id, citas: [{ medico_id, especialidad_id, programada_para }, ...] }
+     * Crear múltiples citas en lote para un paciente.
+     *
+     * Body: `{ paciente_id, citas: [{ medico_id, especialidad_id, programada_para }] }`.
+     * Registra las válidas y reporta colisiones de horario sin abortar el lote.
      */
     public function storeBatch(Request $request): JsonResponse
     {

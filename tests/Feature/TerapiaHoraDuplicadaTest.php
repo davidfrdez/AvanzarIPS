@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Feature;
 
 use App\Models\Actividad;
+use App\Models\Cita;
 use App\Models\Especialidad;
 use App\Models\Objetivo;
 use App\Models\Paciente;
@@ -32,6 +33,7 @@ final class TerapiaHoraDuplicadaTest extends TestCase
 
     private User $profesional;
     private User $admin;
+    private Especialidad $especialidad;
     private array $payload;
 
     protected function setUp(): void
@@ -77,7 +79,7 @@ final class TerapiaHoraDuplicadaTest extends TestCase
         $objetivo    = Objetivo::create(['nombre' => 'Movilidad', 'descripcion' => 'Test']);
         $actividad   = Actividad::create(['objetivo_id' => $objetivo->id, 'nombre' => 'Ejercicio']);
         $respuesta   = Respuesta::create(['actividad_id' => $actividad->id, 'texto_predeterminado' => 'Completo']);
-        $especialidad = Especialidad::create(['nombre' => 'Fisioterapia']);
+        $this->especialidad = Especialidad::create(['nombre' => 'Fisioterapia']);
 
         // --- Paciente ---
         $paciente = Paciente::create([
@@ -100,7 +102,7 @@ final class TerapiaHoraDuplicadaTest extends TestCase
             'paciente_id'       => $paciente->id,
             'objetivo_id'       => $objetivo->id,
             'actividad_id'      => $actividad->id,
-            'especialidad_id'   => $especialidad->id,
+            'especialidad_id'   => $this->especialidad->id,
             'firma_electronica' => 'FIRMA_TEST_001',
             'resultados'        => [
                 [
@@ -112,10 +114,25 @@ final class TerapiaHoraDuplicadaTest extends TestCase
         ];
     }
 
+    /** Crea N citas en el mes dado (default: mes actual) para cubrir el cupo */
+    private function darCupo(int $n = 1, ?\Carbon\CarbonInterface $mes = null): void
+    {
+        $base = ($mes ?? now())->startOfMonth();
+        for ($i = 0; $i < $n; $i++) {
+            Cita::create([
+                'paciente_id'     => $this->payload['paciente_id'],
+                'medico_id'       => $this->profesional->id,
+                'especialidad_id' => $this->especialidad->id,
+                'programada_para' => $base->copy()->addDays($i)->setHour(7),
+            ]);
+        }
+    }
+
     /** Primera terapia en la franja actual → 201 Created */
     public function test_primera_terapia_se_registra_correctamente(): void
     {
         Sanctum::actingAs($this->profesional);
+        $this->darCupo(1);
 
         $this->postJson('/api/terapias', $this->payload)
             ->assertStatus(201)
@@ -128,6 +145,7 @@ final class TerapiaHoraDuplicadaTest extends TestCase
     public function test_segunda_terapia_en_misma_hora_es_rechazada(): void
     {
         Sanctum::actingAs($this->profesional);
+        $this->darCupo(2); // cupo para 2, pero la franja bloquea antes de consumir el 2º
 
         $hora = now()->startOfDay()->addHours(9)->toDateTimeString(); // 09:00 hoy
 
@@ -147,6 +165,7 @@ final class TerapiaHoraDuplicadaTest extends TestCase
     public function test_terapia_en_hora_diferente_del_mismo_dia_es_permitida(): void
     {
         Sanctum::actingAs($this->profesional);
+        $this->darCupo(2); // cupo para 2 terapias en el mes
 
         $hora1 = now()->startOfDay()->addHours(8)->toDateTimeString();  // 08:00
         $hora2 = now()->startOfDay()->addHours(10)->toDateTimeString(); // 10:00
@@ -196,10 +215,13 @@ final class TerapiaHoraDuplicadaTest extends TestCase
     public function test_admin_puede_registrar_terapia_retroactiva(): void
     {
         Sanctum::actingAs($this->admin);
+        // Cita en el mes de ayer (puede ser el mismo mes si ayer es mismo mes, o mes anterior)
+        $ayer = now()->subDay();
+        $this->darCupo(1, $ayer);
 
-        $ayer = now()->subDay()->startOfDay()->addHours(9)->toDateTimeString();
-
-        $this->postJson('/api/terapias', array_merge($this->payload, ['fecha_hora' => $ayer]))
+        $this->postJson('/api/terapias', array_merge($this->payload, [
+            'fecha_hora' => $ayer->startOfDay()->addHours(9)->toDateTimeString(),
+        ]))
             ->assertStatus(201)
             ->assertJsonPath('status', 'success');
 
@@ -210,9 +232,11 @@ final class TerapiaHoraDuplicadaTest extends TestCase
     public function test_retroactivo_bloquea_duplicado_en_misma_franja_pasada(): void
     {
         Sanctum::actingAs($this->admin);
+        $ayer = now()->subDay();
+        $this->darCupo(2, $ayer); // cupo de 2 en el mes de ayer
 
-        $ayer9h    = now()->subDay()->startOfDay()->addHours(9)->toDateTimeString();    // ayer 09:00
-        $ayer9h30  = now()->subDay()->startOfDay()->addHours(9)->addMinutes(30)->toDateTimeString(); // ayer 09:30
+        $ayer9h   = $ayer->startOfDay()->addHours(9)->toDateTimeString();
+        $ayer9h30 = $ayer->startOfDay()->addHours(9)->addMinutes(30)->toDateTimeString();
 
         $this->postJson('/api/terapias', array_merge($this->payload, ['fecha_hora' => $ayer9h]))
             ->assertStatus(201);

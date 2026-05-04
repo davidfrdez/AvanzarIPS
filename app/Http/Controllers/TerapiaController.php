@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Cita;
 use App\Models\ResultadoTerapia;
 use App\Models\Terapia;
 use Carbon\CarbonImmutable;
@@ -55,6 +56,35 @@ class TerapiaController extends Controller
                         . 'Solicita al administrador que realice el registro retroactivo.',
                 ], 403);
             }
+        }
+
+        // ── Cupo mensual ─────────────────────────────────────────────────────
+        // Un paciente no puede tener más terapias que citas programadas en el mes.
+        // Andrés carga las citas del mes por adelantado; ese conteo es el cupo.
+        $citasMes = Cita::where('paciente_id', $validated['paciente_id'])
+            ->whereYear('programada_para', $fechaHora->year)
+            ->whereMonth('programada_para', $fechaHora->month)
+            ->count();
+
+        $terapiasMes = Terapia::where('paciente_id', $validated['paciente_id'])
+            ->whereYear('fecha_hora', $fechaHora->year)
+            ->whereMonth('fecha_hora', $fechaHora->month)
+            ->count();
+
+        if ($terapiasMes >= $citasMes) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => sprintf(
+                    'El paciente ya alcanzó el cupo mensual de %d sesión(es) para %s. '
+                    . 'Programa más citas antes de registrar nuevas terapias.',
+                    $citasMes,
+                    $fechaHora->format('m/Y')
+                ),
+                'data' => [
+                    'horas_programadas' => $citasMes,
+                    'horas_ejecutadas'  => $terapiasMes,
+                ],
+            ], 422);
         }
 
         // ── Duplicado en la misma franja horaria ─────────────────────────────

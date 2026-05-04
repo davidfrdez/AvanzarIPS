@@ -6,8 +6,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePacienteRequest;
 use App\Http\Resources\PacienteResource;
+use App\Models\Cita;
 use App\Models\Paciente;
+use App\Models\Terapia;
 use App\Services\Contracts\PacienteServiceInterface;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -64,8 +67,9 @@ class PacienteController extends Controller
     }
 
     /**
-     * Da de alta (baja clínica) al paciente — esta_activo = false.
-     * El historial clínico permanece intacto y consultable.
+     * Dar de alta a un paciente (baja clínica).
+     *
+     * Marca `esta_activo = false`. El historial permanece consultable.
      * Requiere permiso `pacientes.gestionar`.
      */
     public function darAlta(Request $request, Paciente $paciente): PacienteResource
@@ -80,8 +84,9 @@ class PacienteController extends Controller
     }
 
     /**
-     * Reactiva un paciente previamente dado de alta — esta_activo = true.
-     * Requiere permiso `pacientes.gestionar`.
+     * Reactivar un paciente dado de alta.
+     *
+     * Marca `esta_activo = true`. Requiere permiso `pacientes.gestionar`.
      */
     public function reactivar(Request $request, Paciente $paciente): PacienteResource
     {
@@ -92,5 +97,51 @@ class PacienteController extends Controller
         return new PacienteResource(
             $this->pacienteService->reactivar($paciente)
         );
+    }
+
+    /**
+     * Balance de horas de un paciente en un mes.
+     *
+     * Devuelve citas programadas, terapias ejecutadas y saldo disponible.
+     * Parámetro opcional `?mes=YYYY-MM` (default: mes actual).
+     */
+    public function balanceHoras(Request $request, Paciente $paciente): JsonResponse
+    {
+        $mesParam = $request->input('mes'); // "2026-05"
+
+        if ($mesParam && ! preg_match('/^\d{4}-\d{2}$/', $mesParam)) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'El parámetro mes debe tener formato YYYY-MM (ej: 2026-05).',
+            ], 422);
+        }
+
+        $fecha = $mesParam
+            ? CarbonImmutable::createFromFormat('Y-m', $mesParam)->startOfMonth()
+            : CarbonImmutable::now()->startOfMonth();
+
+        $programadas = Cita::where('paciente_id', $paciente->id)
+            ->whereYear('programada_para', $fecha->year)
+            ->whereMonth('programada_para', $fecha->month)
+            ->count();
+
+        $ejecutadas = Terapia::where('paciente_id', $paciente->id)
+            ->whereYear('fecha_hora', $fecha->year)
+            ->whereMonth('fecha_hora', $fecha->month)
+            ->count();
+
+        $disponibles = max(0, $programadas - $ejecutadas);
+
+        return response()->json([
+            'status' => 'success',
+            'data'   => [
+                'paciente_id'        => $paciente->id,
+                'mes'                => $fecha->format('Y-m'),
+                'horas_programadas'  => $programadas,
+                'horas_ejecutadas'   => $ejecutadas,
+                'horas_disponibles'  => $disponibles,
+                'puede_registrar'    => $disponibles > 0,
+            ],
+        ]);
     }
 }

@@ -140,6 +140,7 @@ Flujo de 3 pasos. Código alfanumérico de **8 caracteres**, válido por **5 min
 | `GET`    | `/api/pacientes`                            | 🔒 | — (`?estado=activos\|inactivos\|todos`) |
 | `POST`   | `/api/pacientes`                            | 🔒 | `pacientes.crear` |
 | `GET`    | `/api/pacientes/{paciente}`                 | 🔒 | — |
+| `GET`    | `/api/pacientes/{paciente}/balance-horas`   | 🔒 | — (`?mes=YYYY-MM`) |
 | `PUT`    | `/api/pacientes/{paciente}/alta`            | 🔒 | `pacientes.gestionar` — dar de alta (baja clínica) |
 | `PUT`    | `/api/pacientes/{paciente}/reactivar`       | 🔒 | `pacientes.gestionar` — reactivar |
 | `DELETE` | `/api/pacientes/{paciente}`                 | 🔒 | — (soft delete permanente) |
@@ -188,6 +189,39 @@ Crea paciente y, opcionalmente, su Historia Clínica de Ingreso en una transacci
 - `cedula` única (ignorando soft-deleted).
 - `fecha_nacimiento` no puede ser posterior a hoy.
 - Bloque `ingreso` es opcional.
+
+### Balance de horas por mes
+
+#### `GET /api/pacientes/{id}/balance-horas`
+Devuelve el cupo mensual del paciente: citas programadas vs. terapias ejecutadas.
+
+| Parámetro | Descripción |
+|-----------|-------------|
+| `?mes=YYYY-MM` | Mes a consultar (default: mes actual) |
+
+```bash
+curl http://127.0.0.1:8000/api/pacientes/5/balance-horas?mes=2026-05 \
+  -H "Authorization: Bearer <token>"
+```
+
+**Respuesta 200:**
+```json
+{
+  "status": "success",
+  "data": {
+    "paciente_id": 5,
+    "mes": "2026-05",
+    "horas_programadas": 20,
+    "horas_ejecutadas": 14,
+    "horas_disponibles": 6,
+    "puede_registrar": true
+  }
+}
+```
+
+> **Regla de cupo:** `POST /api/terapias` bloquea con **422** si `horas_ejecutadas >= horas_programadas` en el mes de la `fecha_hora` enviada. El mensaje incluye las cifras para que el frontend las muestre.
+
+---
 
 ### Alta y reactivación de pacientes
 
